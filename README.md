@@ -1,1 +1,1 @@
-# service-weaver-rabbit
+(Micro) Services Weaver (RabbitMQ)
