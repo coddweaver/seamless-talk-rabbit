@@ -1,0 +1,26 @@
+logging:
+  level:
+    root: INFO
+    
+  
+spring:
+  rabbitmq:
+    host: localhost
+    port: 21323
+    username: guest
+    password: guest
+    
+    template:
+      reply-timeout: 60000
+    listener:
+      simple:
+        concurrency: 5
+        max-concurrency: 10
+        prefetch: 1
+        retry:
+          enabled: true
+          max-attempts: 3
+        default-requeue-rejected: true
+
+server:
+  port: 9003
