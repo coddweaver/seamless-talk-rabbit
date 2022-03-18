@@ -2,8 +2,8 @@ package com.coddweaver.services.weaver.rabbit.processors;
 
 import com.coddweaver.services.weaver.rabbit.annotations.AutoGenRabbitApi;
 import com.coddweaver.services.weaver.rabbit.annotations.AutoGenRabbitQueue;
-import com.coddweaver.services.weaver.rabbit.configs.rabbit.QueueGenerator;
-import com.coddweaver.services.weaver.rabbit.configs.rabbit.RabbitApi;
+import com.coddweaver.services.weaver.rabbit.generation.QueueGenerator;
+import com.coddweaver.services.weaver.rabbit.generation.RabbitApi;
 import com.squareup.javapoet.*;
 import org.springframework.amqp.AmqpTimeoutException;
 import org.springframework.amqp.core.AmqpTemplate;

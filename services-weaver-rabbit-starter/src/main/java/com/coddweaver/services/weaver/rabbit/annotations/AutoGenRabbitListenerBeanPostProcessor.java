@@ -1,7 +1,7 @@
 package com.coddweaver.services.weaver.rabbit.annotations;
 
-import com.coddweaver.services.weaver.rabbit.configs.rabbit.QueueGenerator;
-import com.coddweaver.services.weaver.rabbit.configs.rabbit.RabbitApi;
+import com.coddweaver.services.weaver.rabbit.generation.QueueGenerator;
+import com.coddweaver.services.weaver.rabbit.generation.RabbitApi;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.AcknowledgeMode;
 import org.springframework.amqp.core.AmqpAdmin;

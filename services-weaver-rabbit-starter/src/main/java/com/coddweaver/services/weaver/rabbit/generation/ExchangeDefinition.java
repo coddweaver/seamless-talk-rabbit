@@ -1,4 +1,4 @@
-package com.coddweaver.services.weaver.rabbit.configs.rabbit;
+package com.coddweaver.services.weaver.rabbit.generation;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

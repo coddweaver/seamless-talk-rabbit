@@ -1,4 +1,4 @@
-package com.coddweaver.services.weaver.rabbit.configs.rabbit;
+package com.coddweaver.services.weaver.rabbit.generation;
 
 import com.coddweaver.services.weaver.rabbit.annotations.AutoGenRabbitQueue;
 import com.coddweaver.services.weaver.rabbit.helpers.CaseUtils;

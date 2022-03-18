@@ -1,4 +1,4 @@
-package com.coddweaver.services.weaver.rabbit.configs.jackson;
+package com.coddweaver.services.weaver.rabbit.configs;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;

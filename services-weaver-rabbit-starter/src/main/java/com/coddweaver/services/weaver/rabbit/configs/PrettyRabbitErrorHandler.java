@@ -1,5 +1,6 @@
-package com.coddweaver.services.weaver.rabbit.configs.rabbit;
+package com.coddweaver.services.weaver.rabbit.configs;
 
+import com.coddweaver.services.weaver.rabbit.generation.QueueGenerator;
 import com.coddweaver.services.weaver.rabbit.helpers.ExceptionUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.ImmediateAcknowledgeAmqpException;
@@ -15,13 +16,11 @@ import java.util.Map;
 @Slf4j
 public class PrettyRabbitErrorHandler implements ErrorHandler {
 
-    private final RabbitExceptionStrategy strategy;
     private final AmqpTemplate amqpTemplate;
 
 
     public PrettyRabbitErrorHandler(AmqpTemplate amqpTemplate) {
         this.amqpTemplate = amqpTemplate;
-        this.strategy = new RabbitExceptionStrategy();
     }
 
     @Override
@@ -38,7 +37,6 @@ public class PrettyRabbitErrorHandler implements ErrorHandler {
             messageHeaders.put("x-death-routing-key", failedMessageProperties.getReceivedRoutingKey());
             messageHeaders.put("x-death-time", System.currentTimeMillis());
             messageHeaders.put("x-death-reason", "rejected");
-
             messageHeaders.put("x-exception", NestedExceptionUtils.getRootCause(lefe));
             messageHeaders.put("x-stacktrace", ExceptionUtils.getStackTrace(lefe));
 

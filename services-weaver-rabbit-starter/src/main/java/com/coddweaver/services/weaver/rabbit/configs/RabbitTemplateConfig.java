@@ -1,4 +1,4 @@
-package com.coddweaver.services.weaver.rabbit.configs.rabbit;
+package com.coddweaver.services.weaver.rabbit.configs;
 
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;

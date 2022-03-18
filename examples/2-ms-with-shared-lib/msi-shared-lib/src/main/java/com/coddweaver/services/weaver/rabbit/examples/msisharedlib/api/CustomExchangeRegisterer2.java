@@ -1,9 +1,9 @@
 package com.coddweaver.services.weaver.rabbit.examples.msisharedlib.api;
 
 
-import com.coddweaver.services.weaver.rabbit.configs.rabbit.ExchangeDefinition;
-import com.coddweaver.services.weaver.rabbit.configs.rabbit.ExchangeRegisterer;
-import com.coddweaver.services.weaver.rabbit.configs.rabbit.ExchangeType;
+import com.coddweaver.services.weaver.rabbit.generation.ExchangeDefinition;
+import com.coddweaver.services.weaver.rabbit.generation.ExchangeRegisterer;
+import com.coddweaver.services.weaver.rabbit.generation.ExchangeType;
 import com.coddweaver.services.weaver.rabbit.examples.msisharedlib.api.contracts.CustomContract;
 import com.coddweaver.services.weaver.rabbit.examples.msisharedlib.api.contracts.LibraryContract;
 import org.springframework.context.annotation.Configuration;

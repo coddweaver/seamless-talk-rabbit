@@ -2,7 +2,7 @@ package com.coddweaver.services.weaver.rabbit.examples.msisharedlib.api.contract
 
 
 import com.coddweaver.services.weaver.rabbit.annotations.AutoGenRabbitQueue;
-import com.coddweaver.services.weaver.rabbit.configs.rabbit.RabbitApi;
+import com.coddweaver.services.weaver.rabbit.generation.RabbitApi;
 
 @AutoGenRabbitQueue
 public interface LibraryContract extends RabbitApi {
