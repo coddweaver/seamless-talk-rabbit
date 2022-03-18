@@ -13,7 +13,6 @@ import java.util.List;
 @Configuration
 public class CustomExchangeRegisterer implements ExchangeRegisterer {
 
-    //region Overriden methods
     @Override
     public Collection<ExchangeDefinition> collectExchanges() {
         return List.of(
@@ -22,5 +21,4 @@ public class CustomExchangeRegisterer implements ExchangeRegisterer {
                 )
         );
     }
-//endregion Overriden Methods
 }

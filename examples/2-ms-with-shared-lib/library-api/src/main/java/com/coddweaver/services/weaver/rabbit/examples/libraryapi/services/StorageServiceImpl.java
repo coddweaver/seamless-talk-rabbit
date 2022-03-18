@@ -2,7 +2,6 @@ package com.coddweaver.services.weaver.rabbit.examples.libraryapi.services;
 
 import com.coddweaver.services.weaver.rabbit.examples.libraryapi.repositories.interfaces.FileRepository;
 import com.coddweaver.services.weaver.rabbit.examples.libraryapi.services.interfaces.StorageService;
-import com.coddweaver.services.weaver.rabbit.examples.msisharedlib.api.contracts.RecognitionContract;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
@@ -14,17 +13,12 @@ import java.util.List;
 @Component
 public class StorageServiceImpl implements StorageService {
 
-    //region Fields
     private final FileRepository repository;
-//endregion Fields
 
-    //region Constructors
     public StorageServiceImpl(@Autowired FileRepository repository) {
         this.repository = repository;
     }
-//endregion Constructors
 
-    //region Overriden methods
     @Override
     public void saveFile(MultipartFile data, String fileName) {
         try {
@@ -94,5 +88,4 @@ public class StorageServiceImpl implements StorageService {
             throw new RuntimeException(e);
         }
     }
-//endregion Overriden Methods
 }

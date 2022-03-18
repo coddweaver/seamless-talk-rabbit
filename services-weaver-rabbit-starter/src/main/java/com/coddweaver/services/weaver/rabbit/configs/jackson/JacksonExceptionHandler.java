@@ -11,7 +11,6 @@ import org.springframework.messaging.converter.MessageConversionException;
 @Slf4j
 public class JacksonExceptionHandler extends DeserializationProblemHandler {
 
-    //region Overriden methods
     @Override
     public boolean handleUnknownProperty(DeserializationContext ctxt, JsonParser p,
             JsonDeserializer<?> deserializer, Object beanOrClass, String propertyName) {
@@ -20,12 +19,9 @@ public class JacksonExceptionHandler extends DeserializationProblemHandler {
         }
         return true;
     }
-//endregion Overriden Methods
 
-    //region Private Methods
     private void logAndThrow(String error) {
         log.error(error);
         throw new MessageConversionException(error);
     }
-//endregion Private Methods
 }

@@ -2,9 +2,9 @@ package com.coddweaver.services.weaver.rabbit.processors;
 
 import com.coddweaver.services.weaver.rabbit.annotations.AutoGenRabbitApi;
 import com.coddweaver.services.weaver.rabbit.annotations.AutoGenRabbitQueue;
-import com.squareup.javapoet.*;
 import com.coddweaver.services.weaver.rabbit.configs.rabbit.QueueGenerator;
 import com.coddweaver.services.weaver.rabbit.configs.rabbit.RabbitApi;
+import com.squareup.javapoet.*;
 import org.springframework.amqp.AmqpTimeoutException;
 import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.amqp.core.Binding;
@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 @SupportedSourceVersion(SourceVersion.RELEASE_11)
 public class AutoGenRabbitQueueProcessor extends AbstractProcessor {
 
-    //region Fields
+//region Fields
     public final static String ANNOTATION_PATH = "com.coddweaver.services.weaver.rabbit.annotations.AutoGenRabbitQueue";
 
     private final static String CLASS_NAME_POSTFIX = "Api";
@@ -34,9 +34,7 @@ public class AutoGenRabbitQueueProcessor extends AbstractProcessor {
     private Filer filer;
     private Messager messager;
     private Elements elementUtils;
-//endregion Fields
 
-    //region Overriden methods
     @Override
     public synchronized void init(ProcessingEnvironment processingEnv) {
         super.init(processingEnv);
@@ -54,9 +52,7 @@ public class AutoGenRabbitQueueProcessor extends AbstractProcessor {
         annotations.forEach(annotation -> processAnnotation(annotation, roundEnv));
         return true;
     }
-//endregion Overriden Methods
 
-    //region Private Methods
     private void processAnnotation(TypeElement annotation, RoundEnvironment roundEnv) {
         debug("Found contracts" + roundEnv.getElementsAnnotatedWith(annotation));
 
@@ -186,5 +182,4 @@ public class AutoGenRabbitQueueProcessor extends AbstractProcessor {
     private String generateClassName(String typeName) {
         return typeName + CLASS_NAME_POSTFIX;
     }
-//endregion Private Methods
 }

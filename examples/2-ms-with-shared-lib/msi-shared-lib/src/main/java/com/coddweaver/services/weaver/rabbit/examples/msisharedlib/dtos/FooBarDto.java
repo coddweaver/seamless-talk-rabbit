@@ -13,8 +13,6 @@ import java.util.List;
 @SuperBuilder(toBuilder = true)
 public class FooBarDto {
 
-    //region Fields
     private String foo;
     private List<Integer> bars;
-//endregion Fields
 }

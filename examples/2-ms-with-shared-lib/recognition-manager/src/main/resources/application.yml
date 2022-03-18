@@ -1,8 +1,8 @@
 logging:
   level:
     root: INFO
-    
-  
+
+
 spring:
   rabbitmq:
     host: localhost
@@ -12,6 +12,7 @@ spring:
     
     template:
       reply-timeout: 60000
+    
     listener:
       simple:
         concurrency: 5
@@ -21,6 +22,8 @@ spring:
           enabled: true
           max-attempts: 3
         default-requeue-rejected: true
+        auto-startup: true
+
 
 server:
   port: 9003

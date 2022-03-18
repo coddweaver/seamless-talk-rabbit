@@ -13,7 +13,6 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Service
 public @interface AutoGenRabbitListener {
 
-//region Public Methods
 
     /**
      * The unique identifier of the container managing for this endpoint.
@@ -180,5 +179,4 @@ public @interface AutoGenRabbitListener {
      * @since 2.3
      */
     String converterWinsContentType() default "true";
-//endregion Public Methods
 }

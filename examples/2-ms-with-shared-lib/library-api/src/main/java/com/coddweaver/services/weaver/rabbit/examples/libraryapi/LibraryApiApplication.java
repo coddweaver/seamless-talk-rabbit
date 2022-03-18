@@ -8,10 +8,8 @@ import org.springframework.context.annotation.ComponentScan;
 @ComponentScan("com.coddweaver.services.weaver.rabbit.examples.msisharedlib")
 public class LibraryApiApplication {
 
-    //region Static Methods
     public static void main(String[] args) {
         SpringApplication.run(LibraryApiApplication.class, args);
     }
-//endregion Static Methods
 
 }

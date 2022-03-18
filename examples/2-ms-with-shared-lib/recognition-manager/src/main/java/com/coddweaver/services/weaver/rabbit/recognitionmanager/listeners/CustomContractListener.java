@@ -15,11 +15,8 @@ import java.util.stream.Collectors;
 @AutoGenRabbitListener(returnExceptions = "true")
 public class CustomContractListener implements CustomContract {
 
-    //region Fields
     private final Random rand = ThreadLocalRandom.current();
-//endregion Fields
 
-    //region Overriden methods
     @Override
     @RabbitHandler
     public void testRabbit(Integer data) {
@@ -52,5 +49,4 @@ public class CustomContractListener implements CustomContract {
         log.warn("Got a message by CustomContract.testRabbitMessageConversion: " + data + " and answering back: " + answer);
         return answer;
     }
-//endregion Overriden Methods
 }

@@ -9,12 +9,10 @@ import org.springframework.amqp.rabbit.annotation.RabbitHandler;
 @Slf4j
 public class LibraryContractListener implements LibraryContract {
 
-//region Overriden methods
     @Override
     @RabbitHandler
     public String processMessage(String data) {
         log.error("Got a message: {}", data);
         return "Answer your message";
     }
-//endregion Overriden Methods
 }

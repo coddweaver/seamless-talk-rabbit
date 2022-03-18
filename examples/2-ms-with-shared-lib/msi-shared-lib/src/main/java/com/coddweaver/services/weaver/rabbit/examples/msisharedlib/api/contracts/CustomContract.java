@@ -7,12 +7,10 @@ import com.coddweaver.services.weaver.rabbit.examples.msisharedlib.dtos.FooBarDt
 @AutoGenRabbitQueue()
 public interface CustomContract extends RabbitApi {
 
-    //region Public Methods
     void testRabbit(Integer data);
 
     String testRabbitRpc(String data);
 
     FooBarDto testRabbitMessageConversion(FooBarDto data);
 
-//endregion Public Methods
 }

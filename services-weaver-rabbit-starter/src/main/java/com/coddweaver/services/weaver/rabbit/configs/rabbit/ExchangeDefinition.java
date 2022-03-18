@@ -9,19 +9,15 @@ import java.util.List;
 @AllArgsConstructor
 public class ExchangeDefinition {
 
-    //region Fields
     private final String name;
     private final ExchangeType type;
     private final List<Class<? extends RabbitApi>> contracts;
     private final boolean durable;
-//endregion Fields
 
-    //region Constructors
     public ExchangeDefinition(String name, ExchangeType type, List<Class<? extends RabbitApi>> contracts) {
         this.name = name;
         this.type = type;
         this.contracts = contracts;
         this.durable = false;
     }
-//endregion Constructors
 }

@@ -9,12 +9,10 @@ import org.springframework.amqp.rabbit.annotation.RabbitHandler;
 @AutoGenRabbitListener
 public class RecognitionContractListener implements RecognitionContract {
 
-    //region Overriden methods
     @Override
     @RabbitHandler
     public String myDearRabbit(String data) {
         return "Got a message: " + data;
     }
-//endregion Overriden Methods
 
 }

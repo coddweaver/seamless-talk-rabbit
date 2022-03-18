@@ -1,8 +1,8 @@
 package com.coddweaver.services.weaver.rabbit.annotations;
 
-import lombok.extern.slf4j.Slf4j;
 import com.coddweaver.services.weaver.rabbit.configs.rabbit.QueueGenerator;
 import com.coddweaver.services.weaver.rabbit.configs.rabbit.RabbitApi;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.AcknowledgeMode;
 import org.springframework.amqp.core.AmqpAdmin;
 import org.springframework.amqp.core.Queue;
@@ -56,7 +56,7 @@ public class AutoGenRabbitListenerBeanPostProcessor implements BeanPostProcessor
                                                                EnvironmentAware,
                                                                SmartInitializingSingleton {
 
-    //region Fields
+//region Fields
     public static final String DEFAULT_RABBIT_LISTENER_CONTAINER_FACTORY_BEAN_NAME = "rabbitListenerContainerFactory";
 
     public static final String RABBIT_EMPTY_STRING_ARGUMENTS_PROPERTY = "spring.rabbitmq.emptyStringArguments";
@@ -73,15 +73,11 @@ public class AutoGenRabbitListenerBeanPostProcessor implements BeanPostProcessor
     private BeanExpressionResolver resolver = new StandardBeanExpressionResolver();
     private BeanExpressionContext expressionContext;
     private QueueGenerator queueGenerator;
-//endregion Fields
 
-    //region Constructors
     public AutoGenRabbitListenerBeanPostProcessor() {
         this.emptyStringArguments.add("x-dead-letter-exchange");
     }
-//endregion Constructors
 
-    //region Overriden methods
     @Override
     public int getOrder() {
         return LOWEST_PRECEDENCE;
@@ -170,9 +166,7 @@ public class AutoGenRabbitListenerBeanPostProcessor implements BeanPostProcessor
 
         return bean;
     }
-//endregion Overriden Methods
 
-    //region Protected Methods
 
     protected void assertBeanFactory() {
         Assert.state(this.beanFactory != null, "BeanFactory must be set to obtain container factory by bean name");
@@ -239,9 +233,7 @@ public class AutoGenRabbitListenerBeanPostProcessor implements BeanPostProcessor
 
         this.registrar.registerEndpoint(endpoint, null);
     }
-//endregion Protected Methods
 
-    //region Private Methods
     private void processMultiMethodListeners(AutoGenRabbitListener classLevelListener, Method[] multiMethods,
             Object bean, String beanName) {
 
@@ -531,42 +523,30 @@ public class AutoGenRabbitListenerBeanPostProcessor implements BeanPostProcessor
         }
         return value;
     }
-//endregion Private Methods
 
     private static class BytesToStringConverter implements Converter<byte[], String> {
 
 
-        //region Fields
         private final Charset charset;
-//endregion Fields
 
-        //region Constructors
         BytesToStringConverter(Charset charset) {
             this.charset = charset;
         }
-//endregion Constructors
 
-        //region Overriden methods
         @Override
         public String convert(byte[] source) {
             return new String(source, this.charset);
         }
-//endregion Overriden Methods
 
     }
 
     private class RabbitHandlerMethodFactoryAdapter implements MessageHandlerMethodFactory {
 
-        //region Fields
         private MessageHandlerMethodFactory factory;
-//endregion Fields
 
-        //region Constructors
         RabbitHandlerMethodFactoryAdapter() {
         }
-//endregion Constructors
 
-        //region Getters And Setters
         private MessageHandlerMethodFactory getFactory() {
             if (this.factory == null) {
                 this.factory = createDefaultMessageHandlerMethodFactory();
@@ -577,16 +557,12 @@ public class AutoGenRabbitListenerBeanPostProcessor implements BeanPostProcessor
         public void setMessageHandlerMethodFactory(MessageHandlerMethodFactory rabbitHandlerMethodFactory1) {
             this.factory = rabbitHandlerMethodFactory1;
         }
-//endregion Getters And Setters
 
-        //region Overriden methods
         @Override
         public InvocableHandlerMethod createInvocableHandlerMethod(Object bean, Method method) {
             return getFactory().createInvocableHandlerMethod(bean, method);
         }
-//endregion Overriden Methods
 
-        //region Private Methods
         private MessageHandlerMethodFactory createDefaultMessageHandlerMethodFactory() {
             DefaultMessageHandlerMethodFactory defaultFactory = new DefaultMessageHandlerMethodFactory();
             Validator validator = AutoGenRabbitListenerBeanPostProcessor.this.registrar.getValidator();
@@ -605,7 +581,6 @@ public class AutoGenRabbitListenerBeanPostProcessor implements BeanPostProcessor
             defaultFactory.afterPropertiesSet();
             return defaultFactory;
         }
-//endregion Private Methods
 
     }
 }

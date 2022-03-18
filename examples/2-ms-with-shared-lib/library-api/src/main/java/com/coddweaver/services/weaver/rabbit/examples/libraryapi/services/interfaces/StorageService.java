@@ -7,7 +7,6 @@ import java.util.List;
 
 public interface StorageService {
 
-    //region Public Methods
     void saveFile(MultipartFile data, String path);
 
     InputStream getFile(String path);
@@ -21,5 +20,4 @@ public interface StorageService {
     List<String> listAllFoldersInPath(String path);
 
     List<String> searchFiles(String fileName);
-//endregion Public Methods
 }

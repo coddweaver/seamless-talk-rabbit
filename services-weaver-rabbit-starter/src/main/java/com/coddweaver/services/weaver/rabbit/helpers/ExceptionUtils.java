@@ -9,7 +9,6 @@ import java.util.stream.Collectors;
 
 public class ExceptionUtils {
 
-    //region Static Methods
     public static Map<Class<?>, Throwable> getAllCauseExceptionsMap(Throwable ex) {
         return checkCauseForExceptions(ex, null);
     }
@@ -52,5 +51,4 @@ public class ExceptionUtils {
         e.printStackTrace(pw);
         return sw.toString();
     }
-//endregion Static Methods
 }

@@ -9,7 +9,6 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface AutoGenRabbitQueue {
 
-    //region Public Methods
     String name() default "";
 
     boolean durable() default false;
@@ -19,5 +18,4 @@ public @interface AutoGenRabbitQueue {
     boolean lazy() default false;
 
     int messageTTL() default 0;
-//endregion Public Methods
 }

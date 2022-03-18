@@ -22,17 +22,12 @@ import java.util.stream.Stream;
 @Repository
 public class LocalFileRepositoryImpl implements FileRepository {
 
-    //region Fields
     private final Path repoFolder;
-//endregion Fields
 
-    //region Constructors
     public LocalFileRepositoryImpl(@Value("${repo.folder}") String repoFolder) {
         this.repoFolder = Paths.get(repoFolder);
     }
-//endregion Constructors
 
-    //region Overriden methods
     @Override
     public void saveFile(byte[] data, String fileName) throws IOException {
         FileUtils.writeByteArrayToFile(Paths.get(repoFolder.toString(), fileName)
@@ -80,14 +75,11 @@ public class LocalFileRepositoryImpl implements FileRepository {
                                    .map(file -> file.getAbsoluteFile()
                                                     .toPath()), repoFolder);
     }
-//endregion Overriden Methods
 
-    //region Private Methods
     private List<String> clearFilePaths(Stream<Path> pathStream, Path root) {
         return pathStream.map(root::relativize)
                          .map(Path::toString)
                          .filter(Strings::isNotBlank)
                          .collect(Collectors.toList());
     }
-//endregion Private Methods
 }

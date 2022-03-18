@@ -7,7 +7,6 @@ import java.util.List;
 
 public interface FileRepository {
 
-    //region Public Methods
     void saveFile(byte[] data, String path) throws IOException;
 
     InputStream getFile(String path) throws IOException;
@@ -21,6 +20,5 @@ public interface FileRepository {
     List<String> listAllFoldersInPath(String path) throws IOException;
 
     List<String> searchFiles(String fileName) throws FileNotFoundException;
-//endregion Public Methods
 
 }

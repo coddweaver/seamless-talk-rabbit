@@ -22,14 +22,11 @@ import java.util.List;
 @RequestMapping("library")
 public class LibraryController {
 
-    //region Fields
     private final StorageService service;
     private final RecognitionContract recognitionContract;
     private final CustomContract customContract;
     private final LibraryContract libraryContract;
-//endregion Fields
 
-    //region Package Private Methods
     @RequestMapping(
             path = "/save",
             method = RequestMethod.POST,
@@ -108,6 +105,5 @@ public class LibraryController {
     List<String> searchFiles(@PathVariable("name") String name) {
         return service.searchFiles(name);
     }
-//endregion Package Private Methods
 
 }

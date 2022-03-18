@@ -1,27 +1,30 @@
 repo:
-    folder: 'E:\\VMsCommonFolder'
-    
+  folder: 'E:\\VMsCommonFolder'
+
 springdoc:
-    show-actuator: true
+  show-actuator: true
 
 logging:
-    level:
-        root: INFO
+  level:
+    root: INFO
 
 spring:
-    rabbitmq:
-        host: localhost
-        port: 21323
-        username: guest
-        password: guest
+  rabbitmq:
+    host: localhost
+    port: 21323
+    username: guest
+    password: guest
     
-        template:
-            reply-timeout: 20000
-        listener:
-            simple:
-                concurrency: 5
-                max-concurrency: 10
-                prefetch: 1
-                
+    template:
+      reply-timeout: 20000
+    listener:
+      direct:
+        prefetch: 1
+        retry:
+          enabled: true
+          max-attempts: 3
+        default-requeue-rejected: true
+        auto-startup: true
+
 server:
-    port: 9002
+  port: 9002

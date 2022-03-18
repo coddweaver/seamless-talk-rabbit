@@ -6,15 +6,12 @@ import java.util.regex.Pattern;
 
 public class CaseUtils {
 
-    //region Fields
     private final static Pattern camelPattern = Pattern.compile("[a-z]+(?:[A-Z0-9]+[a-z0-9]+[A-Za-z0-9]*)*");
     private final static Pattern pascalPattern = Pattern.compile("(?:[A-Z][a-z0-9]+)(?:[A-Z]+[a-z0-9]*)*");
     private final static Pattern snakePattern = Pattern.compile("[a-z0-9]+(?:_[a-z0-9]+)*");
     private final static Pattern screamingSnakePattern = Pattern.compile("[A-Z0-9]+(?:_[A-Z0-9]+)*");
     private final static Pattern kebabPattern = Pattern.compile("[a-z0-9]+(?:-[a-z0-9]+)*");
-//endregion Fields
 
-    //region Static Methods
     public static CaseFormat detectCase(String source) {
         if (camelPattern.matcher(source)
                         .replaceAll("")
@@ -52,6 +49,5 @@ public class CaseUtils {
     public static String convert(String source, CaseFormat dstFormat) {
         return detectCase(source).to(dstFormat, source);
     }
-//endregion Static Methods
 
 }

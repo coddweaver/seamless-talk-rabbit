@@ -7,7 +7,5 @@ import com.coddweaver.services.weaver.rabbit.configs.rabbit.RabbitApi;
 @AutoGenRabbitQueue(messageTTL = 600000)
 public interface RecognitionContract extends RabbitApi {
 
-    //region Public Methods
     String myDearRabbit(String data);
-//endregion Public Methods
 }

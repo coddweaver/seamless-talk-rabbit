@@ -9,13 +9,9 @@ public enum ExchangeType {
     FANOUT(org.springframework.amqp.core.ExchangeTypes.FANOUT),
     HEADERS(org.springframework.amqp.core.ExchangeTypes.HEADERS);
 
-    //region Fields
     private final String exchangeTypeCode;
-//endregion Fields
 
-    //region Constructors
     ExchangeType(String exchangeTypeCode) {
         this.exchangeTypeCode = exchangeTypeCode;
     }
-//endregion Constructors
 }

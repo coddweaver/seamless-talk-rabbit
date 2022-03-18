@@ -7,7 +7,5 @@ import com.coddweaver.services.weaver.rabbit.configs.rabbit.RabbitApi;
 @AutoGenRabbitQueue
 public interface LibraryContract extends RabbitApi {
 
-    //region Public Methods
     String processMessage(String data);
-//endregion Public Methods
 }

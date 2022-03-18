@@ -15,21 +15,16 @@ import org.springframework.context.annotation.Configuration;
 @SuppressWarnings({"SpringJavaInjectionPointsAutowiringInspection"})
 public class RabbitTemplateConfig {
 
-    //region Fields
     private final MessageConverter converter;
     private final RabbitProperties properties;
-//endregion Fields
 
 
-    //region Constructors
     public RabbitTemplateConfig(@Qualifier("jsonMessageConverter") MessageConverter converter,
             RabbitProperties properties) {
         this.converter = converter;
         this.properties = properties;
     }
-//endregion Constructors
 
-    //region Public Methods
     @Bean
     public RabbitTemplate jsonRabbitTemplate(ConnectionFactory connectionFactory) {
         RabbitTemplateConfigurer configurer = new RabbitTemplateConfigurer(properties);
@@ -40,5 +35,4 @@ public class RabbitTemplateConfig {
 
         return template;
     }
-//endregion Public Methods
 }

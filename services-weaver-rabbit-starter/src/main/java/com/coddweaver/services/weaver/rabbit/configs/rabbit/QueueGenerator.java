@@ -15,8 +15,8 @@ import java.util.stream.Collectors;
 @Service
 public class QueueGenerator {
 
-    //region Fields
 
+//region Fields
     //For debug purposes
     public final static boolean BASIC_DLQ_ENABLED = true;
     public final static String DEFAULT_DLX_NAME = "common.dlx";
@@ -40,9 +40,7 @@ public class QueueGenerator {
     private final ExchangeDefinition defaultDlxDefinition;
     private final ExchangeDefinition defaultExchangeDefition;
     private final ConfigurableBeanFactory beanFactory;
-//endregion Fields
 
-    //region Constructors
     public QueueGenerator(ConfigurableBeanFactory beanFactory,
             List<? extends ExchangeRegisterer> beanRegisterers) {
         this.beanFactory = beanFactory;
@@ -58,9 +56,7 @@ public class QueueGenerator {
 
         createContractToExchangesMap();
     }
-//endregion Constructors
 
-    //region Static Methods
 
     public static String generateExchangeBeanName(String exchangeDefName) {
         return CaseUtils.convert(exchangeDefName, CaseFormat.LOWER_CAMEL) + EXCHANGE_BEAN_NAME_POSTFIX;
@@ -93,9 +89,7 @@ public class QueueGenerator {
     private static String getContractName(Class<? extends RabbitApi> contract) {
         return CaseUtils.convert(contract.getSimpleName(), CaseFormat.UPPER_CAMEL, CaseFormat.LOWER_CAMEL);
     }
-//endregion Static Methods
 
-    //region Public Methods
     public Binding getBinding(Class<? extends RabbitApi> contract) {
         if (!readyContracts.contains(contract)) {
             processContract(contract);
@@ -172,9 +166,7 @@ public class QueueGenerator {
 
         return queue;
     }
-//endregion Public Methods
 
-    //region Private Methods
     private String generateDlqName(String queueName) {
         return queueName + DLQ_POSTFIX;
     }
@@ -354,5 +346,4 @@ public class QueueGenerator {
 
         return binding;
     }
-//endregion Private Methods
 }

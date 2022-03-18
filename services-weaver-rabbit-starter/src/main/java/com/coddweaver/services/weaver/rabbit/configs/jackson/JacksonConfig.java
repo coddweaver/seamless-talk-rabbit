@@ -12,7 +12,6 @@ import org.springframework.context.annotation.Primary;
 @Configuration
 public class JacksonConfig {
 
-    //region Public Methods
     @Bean
     @Primary
     public ObjectMapper generateObjectMapper() {
@@ -26,5 +25,4 @@ public class JacksonConfig {
     public MessageConverter jsonMessageConverter(@Autowired ObjectMapper objectMapper) {
         return new Jackson2JsonMessageConverter(objectMapper);
     }
-//endregion Public Methods
 }

@@ -15,20 +15,15 @@ import java.util.Map;
 @Slf4j
 public class PrettyRabbitErrorHandler implements ErrorHandler {
 
-    //region Fields
     private final RabbitExceptionStrategy strategy;
     private final AmqpTemplate amqpTemplate;
-//endregion Fields
 
 
-    //region Constructors
     public PrettyRabbitErrorHandler(AmqpTemplate amqpTemplate) {
         this.amqpTemplate = amqpTemplate;
         this.strategy = new RabbitExceptionStrategy();
     }
-//endregion Constructors
 
-    //region Overriden methods
     @Override
     public void handleError(Throwable t) {
         ListenerExecutionFailedException lefe = (ListenerExecutionFailedException) t;
@@ -53,5 +48,4 @@ public class PrettyRabbitErrorHandler implements ErrorHandler {
             throw new ImmediateAcknowledgeAmqpException(lefe);
         }
     }
-//endregion Overriden Methods
 }
