@@ -9,8 +9,8 @@ version = '0.0.1-SNAPSHOT'
 sourceCompatibility = '11'
 
 dependencies {
-    api project(':services-weaver-rabbit-starter')
-    annotationProcessor project(':services-weaver-rabbit-processors')
+    api project(':')
+    annotationProcessor project(':')
 
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'

@@ -1,1 +1,1 @@
-(Micro) Services Weaver (RabbitMQ)
+(Micro) seamless.msc (RabbitMQ)

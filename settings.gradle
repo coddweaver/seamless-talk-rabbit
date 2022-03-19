@@ -1,4 +1,4 @@
-rootProject.name = 'services-weaver-rabbit'
+rootProject.name = 'seamless-talk-rabbit'
 
 include 'library-api'
 project(':library-api').projectDir = file("examples/2-ms-with-shared-lib/library-api")
@@ -8,9 +8,3 @@ project(':msi-shared-lib').projectDir = file("examples/2-ms-with-shared-lib/msi-
 
 include 'recognition-manager'
 project(':recognition-manager').projectDir = file("examples/2-ms-with-shared-lib/recognition-manager")
-
-include ':services-weaver-rabbit-processors'
-project(':services-weaver-rabbit-processors').projectDir = file("services-weaver-rabbit-processors")
-
-include ':services-weaver-rabbit-starter'
-project(':services-weaver-rabbit-starter').projectDir = file("services-weaver-rabbit-starter")
