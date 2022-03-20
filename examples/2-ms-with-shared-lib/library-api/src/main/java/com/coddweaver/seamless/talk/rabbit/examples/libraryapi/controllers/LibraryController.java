@@ -2,6 +2,7 @@ package com.coddweaver.seamless.talk.rabbit.examples.libraryapi.controllers;
 
 import com.coddweaver.seamless.talk.rabbit.examples.libraryapi.services.interfaces.StorageService;
 import com.coddweaver.seamless.talk.rabbit.examples.msisharedlib.api.contracts.CustomContract;
+import com.coddweaver.seamless.talk.rabbit.examples.msisharedlib.api.contracts.CustomContractToFanoutTestRabbitApi;
 import com.coddweaver.seamless.talk.rabbit.examples.msisharedlib.api.contracts.LibraryContract;
 import com.coddweaver.seamless.talk.rabbit.examples.msisharedlib.api.contracts.RecognitionContract;
 import com.coddweaver.seamless.talk.rabbit.examples.msisharedlib.dtos.FooBarDto;
@@ -26,6 +27,8 @@ public class LibraryController {
     private final RecognitionContract recognitionContract;
     private final CustomContract customContract;
     private final LibraryContract libraryContract;
+    private final CustomContractToFanoutTestRabbitApi fanoutApi;
+
 
     @RequestMapping(
             path = "/save",
@@ -58,6 +61,13 @@ public class LibraryController {
         final String answer = recognitionContract.myDearRabbit(message);
         return ResponseEntity.ok()
                              .body("Answer is: " + answer);
+    }
+
+    @GetMapping("/testFanout")
+    ResponseEntity testFanout(@RequestParam("message") Integer message) {
+        fanoutApi.testRabbit(message);
+        return ResponseEntity.ok()
+                             .body("Sent");
     }
 
     @GetMapping("/testRabbit")

@@ -1,11 +1,11 @@
 package com.coddweaver.seamless.talk.rabbit.examples.msisharedlib.api.contracts;
 
 
-import com.coddweaver.seamless.talk.rabbit.annotations.AutoGenRabbitQueue;
-import com.coddweaver.seamless.talk.rabbit.generation.RabbitApi;
+import com.coddweaver.seamless.talk.rabbit.annotations.SeamlessTalkRabbitContract;
+import com.coddweaver.seamless.talk.rabbit.generation.BaseSeamlessTalkRabbitContract;
 
-@AutoGenRabbitQueue
-public interface LibraryContract extends RabbitApi {
+@SeamlessTalkRabbitContract
+public interface LibraryContract extends BaseSeamlessTalkRabbitContract {
 
     String processMessage(String data);
 }

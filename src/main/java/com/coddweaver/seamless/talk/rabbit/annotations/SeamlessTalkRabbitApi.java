@@ -11,7 +11,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 @Service
-@DependsOn("queueGenerator")
-public @interface AutoGenRabbitApi {
+@DependsOn("routesGenerator")
+public @interface SeamlessTalkRabbitApi {
 
 }

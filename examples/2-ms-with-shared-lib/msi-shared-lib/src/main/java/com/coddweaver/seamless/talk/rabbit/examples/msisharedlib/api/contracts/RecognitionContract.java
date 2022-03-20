@@ -1,11 +1,13 @@
 package com.coddweaver.seamless.talk.rabbit.examples.msisharedlib.api.contracts;
 
 
-import com.coddweaver.seamless.talk.rabbit.annotations.AutoGenRabbitQueue;
-import com.coddweaver.seamless.talk.rabbit.generation.RabbitApi;
+import com.coddweaver.seamless.talk.rabbit.annotations.SeamlessTalkRabbitContract;
+import com.coddweaver.seamless.talk.rabbit.generation.BaseSeamlessTalkRabbitContract;
 
-@AutoGenRabbitQueue(messageTTL = 600000)
-public interface RecognitionContract extends RabbitApi {
+@SeamlessTalkRabbitContract(exchangeDefs = {"fanoutTest"}, messageTTL = 600000)
+public interface RecognitionContract extends BaseSeamlessTalkRabbitContract {
 
     String myDearRabbit(String data);
+
+    void testSomeData(Integer data);
 }

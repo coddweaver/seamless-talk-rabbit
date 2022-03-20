@@ -5,7 +5,7 @@ import org.springframework.amqp.core.AmqpTemplate;
 
 import java.util.Arrays;
 
-public interface RabbitApi {
+public interface BaseSeamlessTalkRabbitContract {
 
     private String getApiMethodName() {
         final StackTraceElement[] allStack = Thread.currentThread()
@@ -14,7 +14,7 @@ public interface RabbitApi {
         final StackTraceElement first = Arrays.stream(allStack, 1, allStack.length)
                                               .sequential()
                                               .filter(x -> !x.getClassName()
-                                                             .equals(RabbitApi.class.getCanonicalName()))
+                                                             .equals(BaseSeamlessTalkRabbitContract.class.getCanonicalName()))
                                               .findFirst()
                                               .orElseThrow();
 

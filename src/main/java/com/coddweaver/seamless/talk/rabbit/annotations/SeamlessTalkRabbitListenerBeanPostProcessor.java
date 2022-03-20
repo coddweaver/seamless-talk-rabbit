@@ -1,7 +1,7 @@
 package com.coddweaver.seamless.talk.rabbit.annotations;
 
-import com.coddweaver.seamless.talk.rabbit.generation.QueueGenerator;
-import com.coddweaver.seamless.talk.rabbit.generation.RabbitApi;
+import com.coddweaver.seamless.talk.rabbit.generation.BaseSeamlessTalkRabbitContract;
+import com.coddweaver.seamless.talk.rabbit.generation.RoutesGenerator;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.AcknowledgeMode;
 import org.springframework.amqp.core.AmqpAdmin;
@@ -50,13 +50,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @Configuration
 @Slf4j
-public class AutoGenRabbitListenerBeanPostProcessor implements BeanPostProcessor,
-                                                               Ordered,
-                                                               BeanFactoryAware,
-                                                               EnvironmentAware,
-                                                               SmartInitializingSingleton {
+public class SeamlessTalkRabbitListenerBeanPostProcessor implements BeanPostProcessor,
+                                                                    Ordered,
+                                                                    BeanFactoryAware,
+                                                                    EnvironmentAware,
+                                                                    SmartInitializingSingleton {
 
-//region Fields
     public static final String DEFAULT_RABBIT_LISTENER_CONTAINER_FACTORY_BEAN_NAME = "rabbitListenerContainerFactory";
 
     public static final String RABBIT_EMPTY_STRING_ARGUMENTS_PROPERTY = "spring.rabbitmq.emptyStringArguments";
@@ -72,9 +71,9 @@ public class AutoGenRabbitListenerBeanPostProcessor implements BeanPostProcessor
     private RabbitListenerEndpointRegistry endpointRegistry;
     private BeanExpressionResolver resolver = new StandardBeanExpressionResolver();
     private BeanExpressionContext expressionContext;
-    private QueueGenerator queueGenerator;
+    private RoutesGenerator routesGenerator;
 
-    public AutoGenRabbitListenerBeanPostProcessor() {
+    public SeamlessTalkRabbitListenerBeanPostProcessor() {
         this.emptyStringArguments.add("x-dead-letter-exchange");
     }
 
@@ -145,20 +144,20 @@ public class AutoGenRabbitListenerBeanPostProcessor implements BeanPostProcessor
     @Override
     public Object postProcessAfterInitialization(final Object bean, final String beanName) throws BeansException {
         Class<?> targetClass = AopUtils.getTargetClass(bean);
-        final AutoGenRabbitListener autoGenAnnotation = targetClass.getAnnotation(AutoGenRabbitListener.class);
+        final SeamlessTalkRabbitListener autoGenAnnotation = targetClass.getAnnotation(SeamlessTalkRabbitListener.class);
         if (autoGenAnnotation == null) {
             return bean;
         }
-        if (!RabbitApi.class.isAssignableFrom(targetClass)) {
+        if (!BaseSeamlessTalkRabbitContract.class.isAssignableFrom(targetClass)) {
             throw new IllegalStateException("Found a " + targetClass + " with @" +
-                                                    AutoGenRabbitListener.class.getSimpleName()
-                                                    + " which not implements any interface derived from " + RabbitApi.class);
+                                                    SeamlessTalkRabbitListener.class.getSimpleName()
+                                                    + " which not implements any interface derived from " + BaseSeamlessTalkRabbitContract.class);
         }
 
-        this.queueGenerator = this.beanFactory.getBean(QueueGenerator.class);
+        this.routesGenerator = this.beanFactory.getBean(RoutesGenerator.class);
         final Method[] rabbitHandlers = findRabbitHandlers(targetClass);
 
-        Assert.state(rabbitHandlers.length > 0, "Class with @" + AutoGenRabbitListener.class.getSimpleName()
+        Assert.state(rabbitHandlers.length > 0, "Class with @" + SeamlessTalkRabbitListener.class.getSimpleName()
                 + " must have at least one method with @RabbitHandler annotation. Found: " + rabbitHandlers.length + " at "
                 + bean.getClass());
 
@@ -190,7 +189,7 @@ public class AutoGenRabbitListenerBeanPostProcessor implements BeanPostProcessor
     }
 
     protected void processListener(MethodRabbitListenerEndpoint endpoint,
-            AutoGenRabbitListener rabbitListener, Object bean, Object target, String beanName) {
+            SeamlessTalkRabbitListener rabbitListener, Object bean, Object target, String beanName) {
 
         endpoint.setBean(bean);
         endpoint.setMessageHandlerMethodFactory(this.messageHandlerMethodFactory);
@@ -234,7 +233,7 @@ public class AutoGenRabbitListenerBeanPostProcessor implements BeanPostProcessor
         this.registrar.registerEndpoint(endpoint, null);
     }
 
-    private void processMultiMethodListeners(AutoGenRabbitListener classLevelListener, Method[] multiMethods,
+    private void processMultiMethodListeners(SeamlessTalkRabbitListener classLevelListener, Method[] multiMethods,
             Object bean, String beanName) {
 
         List<Method> checkedMethods = new ArrayList<>();
@@ -302,7 +301,7 @@ public class AutoGenRabbitListenerBeanPostProcessor implements BeanPostProcessor
         return method;
     }
 
-    private void resolveErrorHandler(MethodRabbitListenerEndpoint endpoint, AutoGenRabbitListener rabbitListener) {
+    private void resolveErrorHandler(MethodRabbitListenerEndpoint endpoint, SeamlessTalkRabbitListener rabbitListener) {
         Object errorHandler = resolveExpression(rabbitListener.errorHandler());
         if (errorHandler instanceof RabbitListenerErrorHandler) {
             endpoint.setErrorHandler((RabbitListenerErrorHandler) errorHandler);
@@ -315,7 +314,7 @@ public class AutoGenRabbitListenerBeanPostProcessor implements BeanPostProcessor
         }
     }
 
-    private void resolveAckMode(MethodRabbitListenerEndpoint endpoint, AutoGenRabbitListener rabbitListener) {
+    private void resolveAckMode(MethodRabbitListenerEndpoint endpoint, SeamlessTalkRabbitListener rabbitListener) {
         String ackModeAttr = rabbitListener.ackMode();
         if (StringUtils.hasText(ackModeAttr)) {
             Object ackMode = resolveExpression(ackModeAttr);
@@ -329,7 +328,7 @@ public class AutoGenRabbitListenerBeanPostProcessor implements BeanPostProcessor
         }
     }
 
-    private void resolveAdmin(MethodRabbitListenerEndpoint endpoint, AutoGenRabbitListener rabbitListener, Object adminTarget) {
+    private void resolveAdmin(MethodRabbitListenerEndpoint endpoint, SeamlessTalkRabbitListener rabbitListener, Object adminTarget) {
         Object resolved = resolveExpression(rabbitListener.admin());
         if (resolved instanceof AmqpAdmin) {
             endpoint.setAdmin((AmqpAdmin) resolved);
@@ -350,7 +349,7 @@ public class AutoGenRabbitListenerBeanPostProcessor implements BeanPostProcessor
         }
     }
 
-    private void resolveExecutor(MethodRabbitListenerEndpoint endpoint, AutoGenRabbitListener rabbitListener,
+    private void resolveExecutor(MethodRabbitListenerEndpoint endpoint, SeamlessTalkRabbitListener rabbitListener,
             Object execTarget, String beanName) {
 
         Object resolved = resolveExpression(rabbitListener.executor());
@@ -371,7 +370,7 @@ public class AutoGenRabbitListenerBeanPostProcessor implements BeanPostProcessor
         }
     }
 
-    private void resolvePostProcessor(MethodRabbitListenerEndpoint endpoint, AutoGenRabbitListener rabbitListener,
+    private void resolvePostProcessor(MethodRabbitListenerEndpoint endpoint, SeamlessTalkRabbitListener rabbitListener,
             Object target, String beanName) {
 
         Object resolved = resolveExpression(rabbitListener.replyPostProcessor());
@@ -392,7 +391,7 @@ public class AutoGenRabbitListenerBeanPostProcessor implements BeanPostProcessor
         }
     }
 
-    private void resolveMessageConverter(MethodRabbitListenerEndpoint endpoint, AutoGenRabbitListener rabbitListener,
+    private void resolveMessageConverter(MethodRabbitListenerEndpoint endpoint, SeamlessTalkRabbitListener rabbitListener,
             Object target, String beanName) {
 
         Object resolved = resolveExpression(rabbitListener.messageConverter());
@@ -413,7 +412,7 @@ public class AutoGenRabbitListenerBeanPostProcessor implements BeanPostProcessor
         }
     }
 
-    private void resolveReplyContentType(MethodRabbitListenerEndpoint endpoint, AutoGenRabbitListener rabbitListener) {
+    private void resolveReplyContentType(MethodRabbitListenerEndpoint endpoint, SeamlessTalkRabbitListener rabbitListener) {
         String contentType = resolveExpressionAsString(rabbitListener.replyContentType(), "replyContentType");
         if (StringUtils.hasText(contentType)) {
             endpoint.setReplyContentType(contentType);
@@ -421,7 +420,7 @@ public class AutoGenRabbitListenerBeanPostProcessor implements BeanPostProcessor
         }
     }
 
-    private String getEndpointId(AutoGenRabbitListener rabbitListener) {
+    private String getEndpointId(SeamlessTalkRabbitListener rabbitListener) {
         if (StringUtils.hasText(rabbitListener.id())) {
             return resolveExpressionAsString(rabbitListener.id(), "id");
         } else {
@@ -431,20 +430,19 @@ public class AutoGenRabbitListenerBeanPostProcessor implements BeanPostProcessor
 
     private String[] resolveQueues(Object bean) {
         final Class<?>[] allInterfaces = ClassUtils.getAllInterfaces(bean);
-        Class<? extends RabbitApi> contract = null;
+        Class<? extends BaseSeamlessTalkRabbitContract> contract = null;
         for (Class<?> item : allInterfaces) {
-            if (RabbitApi.class.isAssignableFrom(item)) {
-                final Class<? extends RabbitApi> toAssert = contract;
+            if (BaseSeamlessTalkRabbitContract.class.isAssignableFrom(item)) {
+                final Class<? extends BaseSeamlessTalkRabbitContract> toAssert = contract;
                 Assert.state(toAssert == null,
-                             () -> "Only one interface derived from " + RabbitApi.class.getSimpleName() + " can be implemented " +
-                                     "by class with @" + AutoGenRabbitListener.class.getSimpleName() + ", found: "
+                             () -> "Only one interface derived from " + BaseSeamlessTalkRabbitContract.class.getSimpleName() + " can be implemented " +
+                                     "by class with @" + SeamlessTalkRabbitListener.class.getSimpleName() + ", found: "
                                      + toAssert + " and " + item + " in " + bean.getClass());
-                contract = (Class<? extends RabbitApi>) item;
+                contract = (Class<? extends BaseSeamlessTalkRabbitContract>) item;
             }
         }
 
-        this.queueGenerator.processContract(contract);
-        Queue queueBean = this.beanFactory.getBean(QueueGenerator.generateQueueBeanName(contract), Queue.class);
+        Queue queueBean = this.routesGenerator.getQueue(contract);
 
         return new String[]{queueBean.getName()};
     }
@@ -565,18 +563,18 @@ public class AutoGenRabbitListenerBeanPostProcessor implements BeanPostProcessor
 
         private MessageHandlerMethodFactory createDefaultMessageHandlerMethodFactory() {
             DefaultMessageHandlerMethodFactory defaultFactory = new DefaultMessageHandlerMethodFactory();
-            Validator validator = AutoGenRabbitListenerBeanPostProcessor.this.registrar.getValidator();
+            Validator validator = SeamlessTalkRabbitListenerBeanPostProcessor.this.registrar.getValidator();
             if (validator != null) {
                 defaultFactory.setValidator(validator);
             }
-            defaultFactory.setBeanFactory(AutoGenRabbitListenerBeanPostProcessor.this.beanFactory);
+            defaultFactory.setBeanFactory(SeamlessTalkRabbitListenerBeanPostProcessor.this.beanFactory);
             DefaultConversionService conversionService = new DefaultConversionService();
             conversionService.addConverter(
-                    new AutoGenRabbitListenerBeanPostProcessor.BytesToStringConverter(AutoGenRabbitListenerBeanPostProcessor.this.charset));
+                    new SeamlessTalkRabbitListenerBeanPostProcessor.BytesToStringConverter(SeamlessTalkRabbitListenerBeanPostProcessor.this.charset));
             defaultFactory.setConversionService(conversionService);
 
             List<HandlerMethodArgumentResolver> customArgumentsResolver =
-                    new ArrayList<>(AutoGenRabbitListenerBeanPostProcessor.this.registrar.getCustomMethodArgumentResolvers());
+                    new ArrayList<>(SeamlessTalkRabbitListenerBeanPostProcessor.this.registrar.getCustomMethodArgumentResolvers());
             defaultFactory.setCustomArgumentResolvers(customArgumentsResolver);
             defaultFactory.afterPropertiesSet();
             return defaultFactory;

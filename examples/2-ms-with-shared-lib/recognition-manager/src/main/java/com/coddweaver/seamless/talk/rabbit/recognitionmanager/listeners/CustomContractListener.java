@@ -1,6 +1,6 @@
 package com.coddweaver.seamless.talk.rabbit.recognitionmanager.listeners;
 
-import com.coddweaver.seamless.talk.rabbit.annotations.AutoGenRabbitListener;
+import com.coddweaver.seamless.talk.rabbit.annotations.SeamlessTalkRabbitListener;
 import com.coddweaver.seamless.talk.rabbit.examples.msisharedlib.api.contracts.CustomContract;
 import com.coddweaver.seamless.talk.rabbit.examples.msisharedlib.dtos.FooBarDto;
 import lombok.extern.slf4j.Slf4j;
@@ -12,7 +12,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
 @Slf4j
-@AutoGenRabbitListener(returnExceptions = "true")
+@SeamlessTalkRabbitListener()
 public class CustomContractListener implements CustomContract {
 
     private final Random rand = ThreadLocalRandom.current();

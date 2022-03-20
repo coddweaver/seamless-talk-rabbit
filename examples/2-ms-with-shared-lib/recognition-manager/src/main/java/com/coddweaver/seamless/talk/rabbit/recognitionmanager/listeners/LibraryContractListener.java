@@ -1,11 +1,11 @@
 package com.coddweaver.seamless.talk.rabbit.recognitionmanager.listeners;
 
-import com.coddweaver.seamless.talk.rabbit.annotations.AutoGenRabbitListener;
+import com.coddweaver.seamless.talk.rabbit.annotations.SeamlessTalkRabbitListener;
 import com.coddweaver.seamless.talk.rabbit.examples.msisharedlib.api.contracts.LibraryContract;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitHandler;
 
-@AutoGenRabbitListener
+@SeamlessTalkRabbitListener
 @Slf4j
 public class LibraryContractListener implements LibraryContract {
 

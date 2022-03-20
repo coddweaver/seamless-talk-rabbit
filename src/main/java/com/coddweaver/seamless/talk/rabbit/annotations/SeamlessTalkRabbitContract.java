@@ -7,13 +7,13 @@ import java.lang.annotation.Target;
 
 @Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface AutoGenRabbitQueue {
+public @interface SeamlessTalkRabbitContract {
 
     String name() default "";
 
     boolean durable() default false;
 
-    String rKey() default "";
+    String[] exchangeDefs() default {};
 
     boolean lazy() default false;
 
