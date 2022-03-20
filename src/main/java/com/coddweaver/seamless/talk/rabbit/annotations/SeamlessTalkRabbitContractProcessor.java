@@ -1,6 +1,7 @@
 package com.coddweaver.seamless.talk.rabbit.annotations;
 
-import com.coddweaver.seamless.talk.rabbit.generation.BaseSeamlessTalkRabbitContract;
+import com.coddweaver.seamless.talk.rabbit.generation.AbstractRabbitApi;
+import com.coddweaver.seamless.talk.rabbit.generation.ExchangeType;
 import com.coddweaver.seamless.talk.rabbit.generation.RoutesGenerator;
 import com.squareup.javapoet.*;
 import org.apache.logging.log4j.util.Strings;
@@ -27,6 +28,7 @@ import java.util.stream.Collectors;
 @SupportedSourceVersion(SourceVersion.RELEASE_11)
 public class SeamlessTalkRabbitContractProcessor extends AbstractProcessor {
 
+//region Fields
     public final static String ANNOTATION_PATH = "com.coddweaver.seamless.talk.rabbit.annotations.SeamlessTalkRabbitContract";
     private final static String CLASS_NAME_POSTFIX = "RabbitApi";
     private final static String EXCHANGE_DEFINITION_BEAN_NAME_PATTERN = "[\\w_-]+";
@@ -54,7 +56,7 @@ public class SeamlessTalkRabbitContractProcessor extends AbstractProcessor {
     }
 
     private void processAnnotation(TypeElement annotation, RoundEnvironment roundEnv) {
-        info("Started api generation for found contracts: \n" + Strings.join(roundEnv.getElementsAnnotatedWith(annotation)
+        info("Started Seamless Talk rabbit api generation for found contracts: \n" + Strings.join(roundEnv.getElementsAnnotatedWith(annotation)
                                                                                      .stream()
                                                                                      .map(Object::toString)
                                                                                      .collect(
@@ -79,33 +81,17 @@ public class SeamlessTalkRabbitContractProcessor extends AbstractProcessor {
                                     && !x.getEnclosingElement()
                                          .getSimpleName()
                                          .contentEquals(
-                                                 BaseSeamlessTalkRabbitContract.class.getSimpleName())
+                                                 AbstractRabbitApi.class.getSimpleName())
                             )
                             .collect(
                                     Collectors.toList())
         );
 
         final SeamlessTalkRabbitContract annotation = typeElement.getAnnotation(SeamlessTalkRabbitContract.class);
-        if (annotation != null) {
-            for (String exchangeDefinitionBeanName : annotation.exchangeDefs()) {
-                if (!validateExchangeDefinitionBeanName(exchangeDefinitionBeanName)) {
-                    throw new IllegalArgumentException(
-                            "One of @" + SeamlessTalkRabbitContract.class.getSimpleName() + ".exchangeDefs value on " + typeElement
-                                    + " has wrong format. Found: '" + exchangeDefinitionBeanName + "', the format is "
-                                    + EXCHANGE_DEFINITION_BEAN_NAME_PATTERN);
-                }
-
-                generateApi(typeElement, methodElements, exchangeDefinitionBeanName);
-            }
-        }
-        generateApi(typeElement, methodElements);
+        generateApi(typeElement, methodElements, annotation.exchangeType());
     }
 
-    private void generateApi(TypeElement type, List<ExecutableElement> methods) {
-        generateApi(type, methods, null);
-    }
-
-    private void generateApi(TypeElement type, List<ExecutableElement> methods, String exchangeDefinitionBeanName) {
+    private void generateApi(TypeElement type, List<ExecutableElement> methods, ExchangeType exchangeType) {
         final String typeName = type.getSimpleName()
                                     .toString();
 
@@ -113,37 +99,28 @@ public class SeamlessTalkRabbitContractProcessor extends AbstractProcessor {
         final String bindingFieldName = "binding";
         final String routesGeneratorParamName = "routesGenerator";
 
-        final boolean isExDefBeanNameSet = Strings.isNotBlank(exchangeDefinitionBeanName);
-        final String routesGeneratorCtorStatement = routesGeneratorParamName + ".getBinding("
-                + type.asType() + ".class"
-                + (isExDefBeanNameSet
-                   ? ", \"" + exchangeDefinitionBeanName + "\""
-                   : "")
-                + ")";
-
+        final String routesGeneratorCtorStatement = routesGeneratorParamName + ".getBinding(" + type.asType() + ".class)";
         final MethodSpec ctor = MethodSpec.constructorBuilder()
-                                            .addModifiers(Modifier.PUBLIC)
-                                            .addParameter(AmqpTemplate.class, amqpTemplateFieldName)
-                                            .addParameter(RoutesGenerator.class, routesGeneratorParamName)
-                                            .addStatement(String.format("this.%1$s = %1$s", amqpTemplateFieldName))
-                                            .addStatement(String.format("this.%s = %s", bindingFieldName,
-                                                                        routesGeneratorCtorStatement))
-                                            .build();
+                                          .addModifiers(Modifier.PUBLIC)
+                                          .addParameter(AmqpTemplate.class, amqpTemplateFieldName)
+                                          .addParameter(RoutesGenerator.class, routesGeneratorParamName)
+                                          .addStatement(String.format("this.%1$s = %1$s", amqpTemplateFieldName))
+                                          .addStatement(String.format("this.%s = %s", bindingFieldName,
+                                                                      routesGeneratorCtorStatement))
+                                          .build();
 
-        TypeSpec.Builder typeBuilder = TypeSpec.classBuilder(generateClassName(typeName, exchangeDefinitionBeanName))
+        TypeSpec.Builder typeBuilder = TypeSpec.classBuilder(generateClassName(typeName))
                                                .addSuperinterface(type.asType())
+                                               .superclass(AbstractRabbitApi.class)
                                                .addModifiers(Modifier.PUBLIC)
                                                .addAnnotation(SeamlessTalkRabbitApi.class)
+                                               .addAnnotation(Primary.class)
                                                .addField(FieldSpec.builder(AmqpTemplate.class, amqpTemplateFieldName,
                                                                            Modifier.PRIVATE)
                                                                   .build())
                                                .addField(FieldSpec.builder(Binding.class, bindingFieldName, Modifier.PRIVATE)
                                                                   .build())
                                                .addMethod(ctor);
-
-        if (!isExDefBeanNameSet) {
-            typeBuilder = typeBuilder.addAnnotation(Primary.class);
-        }
 
         List<MethodSpec> methodSpecs = new ArrayList<>();
         for (ExecutableElement method : methods) {
@@ -165,22 +142,24 @@ public class SeamlessTalkRabbitContractProcessor extends AbstractProcessor {
 
             MethodSpec.Builder methodBuilder = MethodSpec.methodBuilder(methodName)
                                                          .addModifiers(Modifier.PUBLIC)
+                                                         .addAnnotation(Override.class)
                                                          .addParameter(ParameterSpec.builder(TypeName.get(payloadParameter.asType()),
                                                                                              payloadParameterName)
                                                                                     .build());
 
+            String commonStatementPart = amqpTemplateFieldName + ", " + bindingFieldName
+                    + ".getExchange(), "
+                    + bindingFieldName + ".getRoutingKey(), " + payloadParameterName + ");";
+
+
             if (returnTypeKind == TypeKind.VOID) {
                 methodBuilder = methodBuilder.returns(TypeName.VOID)
-                                             .addCode("convertAndSend(" + amqpTemplateFieldName + ", " + bindingFieldName
-                                                              + ".getExchange(), "
-                                                              + bindingFieldName + ".getRoutingKey(), " + payloadParameterName + ");");
+                                             .addCode("convertAndSend(" + commonStatementPart);
             } else {
                 final TypeName returnType = TypeName.get(method.getReturnType());
                 methodBuilder = methodBuilder.returns(returnType)
                                              .addException(AmqpTimeoutException.class)
-                                             .addCode("return " + "convertSendAndReceive(" + amqpTemplateFieldName + ", " + bindingFieldName
-                                                              + ".getExchange(), "
-                                                              + bindingFieldName + ".getRoutingKey(), " + payloadParameterName + ");");
+                                             .addCode("return " + "convertSendAndReceive(" + commonStatementPart);
             }
 
             methodSpecs.add(methodBuilder.build());
@@ -212,11 +191,7 @@ public class SeamlessTalkRabbitContractProcessor extends AbstractProcessor {
         messager.printMessage(Diagnostic.Kind.NOTE, msg);
     }
 
-    private String generateClassName(String typeName, String exchangeDefinitionBeanName) {
-        if (Strings.isNotBlank(exchangeDefinitionBeanName)) {
-            return typeName + "To" + firstToUpper(exchangeDefinitionBeanName) + CLASS_NAME_POSTFIX;
-        }
-
+    private String generateClassName(String typeName) {
         return typeName + CLASS_NAME_POSTFIX;
     }
 

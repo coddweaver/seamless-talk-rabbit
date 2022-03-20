@@ -1,6 +1,5 @@
 package com.coddweaver.seamless.talk.rabbit.annotations;
 
-import com.coddweaver.seamless.talk.rabbit.generation.BaseSeamlessTalkRabbitContract;
 import com.coddweaver.seamless.talk.rabbit.generation.RoutesGenerator;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.AcknowledgeMode;
@@ -56,6 +55,7 @@ public class SeamlessTalkRabbitListenerBeanPostProcessor implements BeanPostProc
                                                                     EnvironmentAware,
                                                                     SmartInitializingSingleton {
 
+//region Fields
     public static final String DEFAULT_RABBIT_LISTENER_CONTAINER_FACTORY_BEAN_NAME = "rabbitListenerContainerFactory";
 
     public static final String RABBIT_EMPTY_STRING_ARGUMENTS_PROPERTY = "spring.rabbitmq.emptyStringArguments";
@@ -147,11 +147,6 @@ public class SeamlessTalkRabbitListenerBeanPostProcessor implements BeanPostProc
         final SeamlessTalkRabbitListener autoGenAnnotation = targetClass.getAnnotation(SeamlessTalkRabbitListener.class);
         if (autoGenAnnotation == null) {
             return bean;
-        }
-        if (!BaseSeamlessTalkRabbitContract.class.isAssignableFrom(targetClass)) {
-            throw new IllegalStateException("Found a " + targetClass + " with @" +
-                                                    SeamlessTalkRabbitListener.class.getSimpleName()
-                                                    + " which not implements any interface derived from " + BaseSeamlessTalkRabbitContract.class);
         }
 
         this.routesGenerator = this.beanFactory.getBean(RoutesGenerator.class);
@@ -430,19 +425,21 @@ public class SeamlessTalkRabbitListenerBeanPostProcessor implements BeanPostProc
 
     private String[] resolveQueues(Object bean) {
         final Class<?>[] allInterfaces = ClassUtils.getAllInterfaces(bean);
-        Class<? extends BaseSeamlessTalkRabbitContract> contract = null;
+        Class<?> contract = null;
         for (Class<?> item : allInterfaces) {
-            if (BaseSeamlessTalkRabbitContract.class.isAssignableFrom(item)) {
-                final Class<? extends BaseSeamlessTalkRabbitContract> toAssert = contract;
+            if (item.getAnnotation(SeamlessTalkRabbitContract.class) != null) {
+                final Class<?> toAssert = contract;
                 Assert.state(toAssert == null,
-                             () -> "Only one interface derived from " + BaseSeamlessTalkRabbitContract.class.getSimpleName() + " can be implemented " +
+                             () -> "Only one @" + SeamlessTalkRabbitContract.class.getSimpleName() + " can be implemented " +
                                      "by class with @" + SeamlessTalkRabbitListener.class.getSimpleName() + ", found: "
                                      + toAssert + " and " + item + " in " + bean.getClass());
-                contract = (Class<? extends BaseSeamlessTalkRabbitContract>) item;
+                contract = item;
             }
         }
 
-        Queue queueBean = this.routesGenerator.getQueue(contract);
+        Assert.state(contract != null, () -> "Cannot detect implementable contact on " + bean.getClass()
+                                                                                             .getCanonicalName());
+        Queue queueBean = this.routesGenerator.getQueue(contract, bean.getClass());
 
         return new String[]{queueBean.getName()};
     }
@@ -570,7 +567,8 @@ public class SeamlessTalkRabbitListenerBeanPostProcessor implements BeanPostProc
             defaultFactory.setBeanFactory(SeamlessTalkRabbitListenerBeanPostProcessor.this.beanFactory);
             DefaultConversionService conversionService = new DefaultConversionService();
             conversionService.addConverter(
-                    new SeamlessTalkRabbitListenerBeanPostProcessor.BytesToStringConverter(SeamlessTalkRabbitListenerBeanPostProcessor.this.charset));
+                    new SeamlessTalkRabbitListenerBeanPostProcessor.BytesToStringConverter(
+                            SeamlessTalkRabbitListenerBeanPostProcessor.this.charset));
             defaultFactory.setConversionService(conversionService);
 
             List<HandlerMethodArgumentResolver> customArgumentsResolver =

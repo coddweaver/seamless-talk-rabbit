@@ -5,9 +5,7 @@ import lombok.Getter;
 @Getter
 public enum ExchangeType {
     DIRECT(org.springframework.amqp.core.ExchangeTypes.DIRECT),
-    TOPIC(org.springframework.amqp.core.ExchangeTypes.TOPIC),
-    FANOUT(org.springframework.amqp.core.ExchangeTypes.FANOUT),
-    HEADERS(org.springframework.amqp.core.ExchangeTypes.HEADERS);
+    FANOUT(org.springframework.amqp.core.ExchangeTypes.FANOUT);
 
     private final String exchangeTypeCode;
 

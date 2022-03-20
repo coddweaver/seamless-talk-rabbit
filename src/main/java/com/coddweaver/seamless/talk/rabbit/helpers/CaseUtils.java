@@ -50,4 +50,13 @@ public class CaseUtils {
         return detectCase(source).to(dstFormat, source);
     }
 
+
+    public static String firstToUpper(String str) {
+        return str.substring(0, 1).toUpperCase() + str.substring(1);
+    }
+
+    public static String firstToLower(String str) {
+        return str.substring(0, 1).toUpperCase() + str.substring(1);
+    }
+
 }

@@ -1,4 +1,4 @@
-package com.coddweaver.seamless.talk.rabbit.recognitionmanager.listeners;
+package com.coddweaver.seamless.talk.rabbit.examples.libraryapi.listeners;
 
 import com.coddweaver.seamless.talk.rabbit.annotations.SeamlessTalkRabbitListener;
 import com.coddweaver.seamless.talk.rabbit.examples.msisharedlib.api.contracts.LibraryContract;
@@ -11,8 +11,7 @@ public class LibraryContractListener implements LibraryContract {
 
     @Override
     @RabbitHandler
-    public String processMessage(String data) {
+    public void fanoutMessage(String data) {
         log.error("Got a message: {}", data);
-        return "Answer your message";
     }
 }

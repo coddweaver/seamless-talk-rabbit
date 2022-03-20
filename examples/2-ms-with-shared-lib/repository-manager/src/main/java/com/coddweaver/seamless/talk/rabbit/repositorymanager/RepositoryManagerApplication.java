@@ -1,13 +1,13 @@
-package com.coddweaver.seamless.talk.rabbit.recognitionmanager;
+package com.coddweaver.seamless.talk.rabbit.repositorymanager;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class RecognitionManagerApplication {
+public class RepositoryManagerApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(RecognitionManagerApplication.class, args);
+        SpringApplication.run(RepositoryManagerApplication.class, args);
     }
 
 }

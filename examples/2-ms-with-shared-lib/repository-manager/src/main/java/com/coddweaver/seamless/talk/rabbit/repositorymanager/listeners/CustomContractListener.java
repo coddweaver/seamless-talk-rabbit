@@ -1,4 +1,4 @@
-package com.coddweaver.seamless.talk.rabbit.recognitionmanager.listeners;
+package com.coddweaver.seamless.talk.rabbit.repositorymanager.listeners;
 
 import com.coddweaver.seamless.talk.rabbit.annotations.SeamlessTalkRabbitListener;
 import com.coddweaver.seamless.talk.rabbit.examples.msisharedlib.api.contracts.CustomContract;

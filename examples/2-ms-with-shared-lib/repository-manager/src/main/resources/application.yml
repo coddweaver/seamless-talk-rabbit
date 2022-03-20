@@ -4,6 +4,8 @@ logging:
 
 
 spring:
+  application:
+    name: "repository-manager"
   rabbitmq:
     host: localhost
     port: 21323
@@ -27,3 +29,6 @@ spring:
 
 server:
   port: 9003
+
+repo:
+  folder: 'E:\\VMsCommonFolder'

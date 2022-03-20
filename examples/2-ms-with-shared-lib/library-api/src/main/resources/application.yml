@@ -1,6 +1,3 @@
-repo:
-  folder: 'E:\\VMsCommonFolder'
-
 springdoc:
   show-actuator: true
 
@@ -9,6 +6,8 @@ logging:
     root: INFO
 
 spring:
+  application:
+    name: "library-api"
   rabbitmq:
     host: localhost
     port: 21323

@@ -1,29 +1,23 @@
 package com.coddweaver.seamless.talk.rabbit.generation;
 
 import lombok.Getter;
-import org.springframework.beans.factory.BeanNameAware;
-
-import java.util.List;
 
 @Getter
-public class ExchangeDefinition implements BeanNameAware {
+public class ExchangeDefinition {
 
-    private String beanName;
+    private final Class<?> contract;
     private final ExchangeType type;
     private final boolean durable;
 
-    public ExchangeDefinition(ExchangeType type) {
+    public ExchangeDefinition(Class<?> contract, ExchangeType type) {
+        this.contract = contract;
         this.type = type;
         this.durable = false;
     }
 
-    public ExchangeDefinition(ExchangeType type, boolean durable) {
+    public ExchangeDefinition(Class<?> contract, ExchangeType type, boolean durable) {
+        this.contract = contract;
         this.type = type;
         this.durable = durable;
-    }
-
-    @Override
-    public void setBeanName(String name) {
-        this.beanName = name;
     }
 }

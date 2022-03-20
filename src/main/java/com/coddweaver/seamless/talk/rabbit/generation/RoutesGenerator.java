@@ -1,234 +1,215 @@
 package com.coddweaver.seamless.talk.rabbit.generation;
 
 import com.coddweaver.seamless.talk.rabbit.annotations.SeamlessTalkRabbitContract;
+import com.coddweaver.seamless.talk.rabbit.annotations.SeamlessTalkRabbitListener;
+import com.coddweaver.seamless.talk.rabbit.helpers.CaseUtils;
+import com.coddweaver.seamless.talk.rabbit.helpers.RoutesGenerationUtils;
+import com.google.common.base.CaseFormat;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
-import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.core.*;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
 
 import static com.coddweaver.seamless.talk.rabbit.helpers.RoutesGenerationUtils.*;
 
 
 @SuppressWarnings("UnusedReturnValue")
 @Service
+@Slf4j
 public final class RoutesGenerator {
 
-    private final Set<ExchangeDefinition> readyExchanges = new HashSet<>();
-    private final Set<Class<? extends BaseSeamlessTalkRabbitContract>> readyContracts = new HashSet<>();
-    private final Set<Map.Entry<Class<? extends BaseSeamlessTalkRabbitContract>, ExchangeDefinition>> readyBindings = new HashSet<>();
-    private final Map<String, ExchangeDefinition> nameToExchangeDefinition = new HashMap<>();
+    private final Set<Class<?>> readyExchanges = new HashSet<>();
+    private final Set<Class<?>> readyContracts = new HashSet<>();
 
     private final Exchange defaultDlx;
     private final Exchange defaultExchange;
-    private final ExchangeDefinition defaultDlxDefinition;
-    private final ExchangeDefinition defaultExchangeDefinition;
     private final ConfigurableBeanFactory beanFactory;
 
-    public RoutesGenerator(ConfigurableBeanFactory beanFactory,
-            List<? extends ExchangeDefinition> allExchangeDefinitions) {
+    @Value("${spring.application.name:}")
+    private String applicationName;
+
+    public RoutesGenerator(ConfigurableBeanFactory beanFactory) {
         this.beanFactory = beanFactory;
 
-        this.defaultDlxDefinition = initDefaultExchangeDefinition(DEFAULT_DLX_BEAN_NAME, true);
-        this.defaultExchangeDefinition = initDefaultExchangeDefinition(DEFAULT_EXCHANGE_BEAN_NAME, false);
-
-        this.defaultDlx = defineExchange(this.defaultDlxDefinition, DEFAULT_DLX_NAME, DEFAULT_DLX_BEAN_NAME);
-        this.defaultExchange = defineExchange(this.defaultExchangeDefinition, DEFAULT_EXCHANGE_NAME, DEFAULT_EXCHANGE_BEAN_NAME);
-
-        initContractToExchangesMap(allExchangeDefinitions);
+        this.defaultDlx = defineDefaultExchange(DEFAULT_DLX_NAME, DEFAULT_DLX_BEAN_NAME, false);
+        this.defaultExchange = defineDefaultExchange(DEFAULT_EXCHANGE_NAME, DEFAULT_EXCHANGE_BEAN_NAME, false);
     }
 
-    public Queue getQueue(Class<? extends BaseSeamlessTalkRabbitContract> contract) {
-        if (!readyContracts.contains(contract)) {
-            processContract(contract);
+    public Queue getQueue(Class<?> contract, Class<?> listenerClass) {
+        final SeamlessTalkRabbitContract params = getContractParams(contract);
+        if (params.exchangeType() == ExchangeType.DIRECT && readyContracts.contains(contract)) {
+            return beanFactory.getBean(generateQueueBeanName(contract), Queue.class);
         }
 
-        return beanFactory.getBean(generateQueueBeanName(contract), Queue.class);
+        return processContract(contract, listenerClass);
     }
 
-    public Binding getBinding(Class<? extends BaseSeamlessTalkRabbitContract> contract) {
-        if (!readyContracts.contains(contract)) {
-            processContract(contract);
-        }
-
-        return beanFactory.getBean(generateBindingBeanName(contract), Binding.class);
+    public Binding getBinding(Class<?> contract) {
+        return generateBindingData(contract);
     }
 
-    public Binding getBinding(Class<? extends BaseSeamlessTalkRabbitContract> contract, String exchangeDefinitionBeanName) {
-        if (!readyContracts.contains(contract)) {
-            processContract(contract);
-        }
-
-        return beanFactory.getBean(generateBindingBeanName(contract, exchangeDefinitionBeanName), Binding.class);
-    }
-
-    private void initContractToExchangesMap(List<? extends ExchangeDefinition> allExchangeDefinitions) {
-        for (ExchangeDefinition exchangeDefinition : allExchangeDefinitions) {
-            nameToExchangeDefinition.put(exchangeDefinition.getBeanName(), exchangeDefinition);
-        }
-    }
-
-    private Queue processContract(Class<? extends BaseSeamlessTalkRabbitContract> contract) {
-
-        List<ExchangeDefinition> definitions = new ArrayList<>();
-        SeamlessTalkRabbitContract params = contract.getAnnotation(SeamlessTalkRabbitContract.class);
-        if (params != null) {
-            for (String exchangeDefinitionBeanName : params.exchangeDefs()) {
-                final ExchangeDefinition exchangeDefinition = nameToExchangeDefinition.get(exchangeDefinitionBeanName);
-                if (exchangeDefinition != null) {
-                    definitions.add(exchangeDefinition);
-                }
-            }
-        }
-
-        final Queue queue = defineQueue(contract);
-        defineDefaultBinding(contract, queue);
-
-        if (definitions.isEmpty()) {
-            return queue;
-        }
-
-        for (ExchangeDefinition definition : definitions) {
-            final Exchange exchange = defineExchange(definition);
-            defineBinding(contract, definition, queue, exchange);
+    private Queue processContract(Class<?> contract, Class<?> listenerClass) {
+        SeamlessTalkRabbitContract params = getContractParams(contract);
+        final Queue queue = defineQueue(contract, listenerClass);
+        if (params.exchangeType() == ExchangeType.DIRECT) {
+            defineDefaultBinding(contract, queue);
+        } else {
+            final Exchange exchange = defineExchange(contract);
+            defineBinding(contract, listenerClass, queue, exchange);
         }
 
         return queue;
     }
 
-    private Queue defineQueue(Class<? extends BaseSeamlessTalkRabbitContract> contract) {
+    private Binding generateBindingData(Class<?> contract) {
+        final String destination = generateQueueName(contract);
 
-        if (readyContracts.contains(contract)) {
-            return beanFactory.getBean(generateQueueBeanName(contract), Queue.class);
-        }
-
-        String queueName = generateQueueName(contract);
-
-        QueueBuilder queueBuilder;
-        SeamlessTalkRabbitContract params = contract.getAnnotation(SeamlessTalkRabbitContract.class);
-        if (params != null) {
-            if (Strings.isNotBlank(params.name())) {
-                queueName = params.name();
-            }
-
-            queueBuilder = params.durable()
-                           ? QueueBuilder.durable(queueName)
-                           : QueueBuilder.nonDurable(queueName);
-            if (params.lazy()) {
-                queueBuilder = queueBuilder.lazy();
-            }
-            if (params.messageTTL() > 0) {
-                queueBuilder = queueBuilder.ttl(params.messageTTL());
-            }
-
+        SeamlessTalkRabbitContract params = getContractParams(contract);
+        if (params.exchangeType() == ExchangeType.DIRECT) {
+            return new Binding(destination,
+                               Binding.DestinationType.EXCHANGE,
+                               defaultExchange.getName(),
+                               destination, null);
         } else {
-            queueBuilder = QueueBuilder.nonDurable(queueName);
+            return new Binding(destination,
+                               Binding.DestinationType.EXCHANGE,
+                               RoutesGenerationUtils.generateExchangeName(contract),
+                               destination, null);
         }
 
-        defineDlq(queueName, defaultDlx, contract);
+
+    }
+
+    private Queue defineQueue(Class<?> contract, Class<?> listenerClass) {
+        SeamlessTalkRabbitContract params = getContractParams(contract);
+
+        String queueName;
+        String additionalBeanNamePart;
+        QueueBuilder queueBuilder;
+        if (params.exchangeType() == ExchangeType.DIRECT) {
+            queueName = generateQueueName(contract);
+            additionalBeanNamePart = "";
+        } else {
+            if (Strings.isNotBlank(this.applicationName)) {
+                queueName = generateQueueName(contract) + "." + this.applicationName + "." + listenerClass.getSimpleName();
+            } else {
+                log.warn("It is highly recommended to set @" + SeamlessTalkRabbitListener.class.getSimpleName()
+                                 + ".name() on listeners or spring.application.name property for contracts with type different than DIRECT otherwise it causes long listener's "
+                                 + "queue name contains canonical name of class. Found in " + listenerClass);
+                queueName = generateQueueName(contract) + "." + listenerClass.getCanonicalName();
+            }
+            additionalBeanNamePart = listenerClass.getSimpleName();
+        }
+
+        if (Strings.isNotBlank(params.name())) {
+            queueName = params.name();
+            additionalBeanNamePart = CaseUtils.convert(queueName, CaseFormat.UPPER_CAMEL);
+        }
+
+        String queueBeanName = generateQueueBeanName(contract, additionalBeanNamePart);
+        queueBuilder = params.durable()
+                       ? QueueBuilder.durable(queueName)
+                       : QueueBuilder.nonDurable(queueName);
+        if (params.lazy()) {
+            queueBuilder = queueBuilder.lazy();
+        }
+        if (params.messageTTL() > 0) {
+            queueBuilder = queueBuilder.ttl(params.messageTTL());
+        }
+
+        if (params.exchangeType() != ExchangeType.DIRECT) {
+            queueBuilder = queueBuilder.autoDelete();
+        }
+
+        final Queue dlq = QueueBuilder.nonDurable(generateDlqName(queueName))
+                                      .build();
+        final String dlqBeanName = generateDlqBeanName(contract, additionalBeanNamePart);
+        beanFactory.registerSingleton(dlqBeanName, dlq);
+
+        final Binding binding = BindingBuilder.bind(dlq)
+                                              .to(defaultDlx)
+                                              .with(queueName)
+                                              .noargs();
+        final String dlqBindingName = generateDlqBindingBeanName(contract, additionalBeanNamePart);
+        beanFactory.registerSingleton(dlqBindingName, binding);
+
         queueBuilder = queueBuilder
                 .deadLetterExchange(DEFAULT_DLX_NAME)
                 .deadLetterRoutingKey(queueName);
 
         final Queue queue = queueBuilder.build();
 
-        final String queueBeanName = generateQueueBeanName(contract);
         beanFactory.registerSingleton(queueBeanName, queue);
         readyContracts.add(contract);
 
         return queue;
     }
 
-    private Queue defineDlq(String queueName, Exchange exchange, Class<? extends BaseSeamlessTalkRabbitContract> contract) {
-        final Queue dlq = QueueBuilder.durable(generateDlqName(queueName))
-                                      .build();
+    private Exchange defineDefaultExchange(String exchangeName, String exchangeBeanName, boolean durable) {
+        final Exchange exchange = ExchangeBuilder.directExchange(exchangeName)
+                                                 .durable(durable)
+                                                 .build();
 
-        final String dlqBeanName = generateDlqBeanName(contract);
-        beanFactory.registerSingleton(dlqBeanName, dlq);
-        defineDlqBinding(dlq, queueName, exchange, contract);
-
-        return dlq;
+        beanFactory.registerSingleton(exchangeBeanName, exchange);
+        return exchange;
     }
 
-    private Binding defineDlqBinding(Queue dlq, String queueName, Exchange exchange, Class<? extends BaseSeamlessTalkRabbitContract> contract) {
-        final Binding binding = BindingBuilder.bind(dlq)
-                                              .to(exchange)
-                                              .with(queueName)
-                                              .noargs();
-
-        final String dlqBindingName = generateDlqBindingBeanName(contract);
-        beanFactory.registerSingleton(dlqBindingName, binding);
-
-        return binding;
-    }
-
-    private Binding defineDefaultBinding(Class<? extends BaseSeamlessTalkRabbitContract> contract, Queue queue) {
-        Binding binding = createBinding(queue, defaultExchange, contract);
+    private Binding defineDefaultBinding(Class<?> contract, Queue queue) {
+        Binding binding = createBinding(queue, defaultExchange);
 
         final String bindingBeanName = generateBindingBeanName(contract);
         beanFactory.registerSingleton(bindingBeanName, binding);
-        readyBindings.add(new AbstractMap.SimpleEntry<>(contract, defaultExchangeDefinition));
 
         return binding;
     }
 
-    private Exchange defineExchange(ExchangeDefinition exchangeDef) {
-        return defineExchange(exchangeDef, generateExchangeName(exchangeDef.getBeanName()), null);
-    }
 
-    private Exchange defineExchange(ExchangeDefinition exchangeDef, String exchangeName, String exchangeBeanName) {
-        if (exchangeBeanName == null) {
-            exchangeBeanName = generateExchangeBeanName(exchangeDef.getBeanName());
-        }
+    private Exchange defineExchange(Class<?> contract) {
+        String exchangeBeanName = generateExchangeBeanName(contract);
 
-        if (readyExchanges.contains(exchangeDef)) {
+        if (readyExchanges.contains(contract)) {
             return beanFactory.getBean(exchangeBeanName, Exchange.class);
         }
 
         ExchangeBuilder exchangeBuilder;
-        switch (exchangeDef.getType()) {
-            case TOPIC:
-                exchangeBuilder = ExchangeBuilder.topicExchange(exchangeName);
-                break;
+        String exchangeName = generateExchangeName(contract);
+        final SeamlessTalkRabbitContract contractParams = getContractParams(contract);
+        final ExchangeType exchangeType = contractParams.exchangeType();
+        switch (exchangeType) {
             case DIRECT:
                 exchangeBuilder = ExchangeBuilder.directExchange(exchangeName);
                 break;
             case FANOUT:
                 exchangeBuilder = ExchangeBuilder.fanoutExchange(exchangeName);
                 break;
-            case HEADERS:
-                exchangeBuilder = ExchangeBuilder.headersExchange(exchangeName);
-                break;
             default:
-                throw new UnsupportedOperationException("Cannot generate exchange with type " + exchangeDef.getType());
+                throw new UnsupportedOperationException("Cannot generate exchange with type " + exchangeType);
         }
 
-        final Exchange exchange = exchangeBuilder.durable(exchangeDef.isDurable())
+        final Exchange exchange = exchangeBuilder.durable(contractParams.durable())
                                                  .build();
         beanFactory.registerSingleton(exchangeBeanName, exchange);
-        readyExchanges.add(exchangeDef);
+        readyExchanges.add(contract);
 
         return exchange;
     }
 
-    private Binding defineBinding(Class<? extends BaseSeamlessTalkRabbitContract> contract, ExchangeDefinition exchangeDefinition, Queue queue,
-            Exchange exchange) {
-        Binding binding = createBinding(queue, exchange, contract);
+    private Binding defineBinding(Class<?> contract, Class<?> listenerClass, Queue queue, Exchange exchange) {
+        Binding binding = createBinding(queue, exchange);
 
-        final String bindingName = generateBindingBeanName(contract, exchangeDefinition.getBeanName());
+        final String bindingName = generateBindingBeanName(contract, listenerClass.getSimpleName());
         beanFactory.registerSingleton(bindingName, binding);
-        readyBindings.add(new AbstractMap.SimpleEntry<>(contract, exchangeDefinition));
 
         return binding;
     }
 
 
-    private Binding createBinding(Queue queue, Exchange exchange, Class<? extends BaseSeamlessTalkRabbitContract> contract) {
-        //For future purposes
-        SeamlessTalkRabbitContract params = contract.getAnnotation(SeamlessTalkRabbitContract.class);
-
+    private Binding createBinding(Queue queue, Exchange exchange) {
         Binding binding;
         if (exchange.getType()
                     .equals(ExchangeType.FANOUT.getExchangeTypeCode())) {
@@ -244,11 +225,5 @@ public final class RoutesGenerator {
         }
 
         return binding;
-    }
-
-    private ExchangeDefinition initDefaultExchangeDefinition(String name, boolean durable) {
-        final ExchangeDefinition exchangeDefinition = new ExchangeDefinition(ExchangeType.DIRECT, durable);
-        exchangeDefinition.setBeanName(name);
-        return exchangeDefinition;
     }
 }

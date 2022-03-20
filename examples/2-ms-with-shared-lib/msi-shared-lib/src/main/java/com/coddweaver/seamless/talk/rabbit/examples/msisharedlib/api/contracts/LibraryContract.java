@@ -2,10 +2,10 @@ package com.coddweaver.seamless.talk.rabbit.examples.msisharedlib.api.contracts;
 
 
 import com.coddweaver.seamless.talk.rabbit.annotations.SeamlessTalkRabbitContract;
-import com.coddweaver.seamless.talk.rabbit.generation.BaseSeamlessTalkRabbitContract;
+import com.coddweaver.seamless.talk.rabbit.generation.ExchangeType;
 
-@SeamlessTalkRabbitContract
-public interface LibraryContract extends BaseSeamlessTalkRabbitContract {
+@SeamlessTalkRabbitContract(exchangeType = ExchangeType.FANOUT)
+public interface LibraryContract {
 
-    String processMessage(String data);
+    void fanoutMessage(String data);
 }

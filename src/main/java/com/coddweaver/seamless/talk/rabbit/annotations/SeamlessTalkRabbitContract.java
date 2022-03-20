@@ -1,5 +1,8 @@
 package com.coddweaver.seamless.talk.rabbit.annotations;
 
+import com.coddweaver.seamless.talk.rabbit.generation.ExchangeType;
+import org.springframework.amqp.core.ExchangeTypes;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -13,7 +16,7 @@ public @interface SeamlessTalkRabbitContract {
 
     boolean durable() default false;
 
-    String[] exchangeDefs() default {};
+    ExchangeType exchangeType() default ExchangeType.DIRECT;
 
     boolean lazy() default false;
 

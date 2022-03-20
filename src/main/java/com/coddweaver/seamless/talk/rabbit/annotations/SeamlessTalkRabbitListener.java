@@ -13,7 +13,6 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Service
 public @interface SeamlessTalkRabbitListener {
 
-
     /**
      * The unique identifier of the container managing for this endpoint.
      * <p>If none is specified an auto-generated one is provided.

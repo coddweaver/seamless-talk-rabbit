@@ -1,4 +1,4 @@
-package com.coddweaver.seamless.talk.rabbit.examples.libraryapi.repositories.interfaces;
+package com.coddweaver.seamless.talk.rabbit.repositorymanager.repositories.interfaces;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;

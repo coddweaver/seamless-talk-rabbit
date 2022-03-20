@@ -1,6 +1,6 @@
-package com.coddweaver.seamless.talk.rabbit.examples.libraryapi.repositories;
+package com.coddweaver.seamless.talk.rabbit.repositorymanager.repositories;
 
-import com.coddweaver.seamless.talk.rabbit.examples.libraryapi.repositories.interfaces.FileRepository;
+import com.coddweaver.seamless.talk.rabbit.repositorymanager.repositories.interfaces.FileRepository;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.apache.logging.log4j.util.Strings;

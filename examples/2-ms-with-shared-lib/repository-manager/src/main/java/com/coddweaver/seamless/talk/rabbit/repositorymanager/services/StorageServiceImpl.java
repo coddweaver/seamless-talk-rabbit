@@ -1,7 +1,7 @@
-package com.coddweaver.seamless.talk.rabbit.examples.libraryapi.services;
+package com.coddweaver.seamless.talk.rabbit.repositorymanager.services;
 
-import com.coddweaver.seamless.talk.rabbit.examples.libraryapi.repositories.interfaces.FileRepository;
-import com.coddweaver.seamless.talk.rabbit.examples.libraryapi.services.interfaces.StorageService;
+import com.coddweaver.seamless.talk.rabbit.repositorymanager.repositories.interfaces.FileRepository;
+import com.coddweaver.seamless.talk.rabbit.repositorymanager.services.interfaces.StorageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;

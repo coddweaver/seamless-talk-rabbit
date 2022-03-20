@@ -18,7 +18,7 @@ public class RabbitListenerFactoryConfig {
         configurer.configure(factory, connectionFactory);
         return factory;
     }
-    
+
     @Bean
     public DirectRabbitListenerContainerFactory directRabbitListenerContainerFactory(ConnectionFactory connectionFactory,
             DirectRabbitListenerContainerFactoryConfigurer configurer) {

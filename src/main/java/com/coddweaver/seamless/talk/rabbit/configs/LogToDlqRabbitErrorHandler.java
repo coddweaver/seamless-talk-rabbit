@@ -1,6 +1,5 @@
 package com.coddweaver.seamless.talk.rabbit.configs;
 
-import com.coddweaver.seamless.talk.rabbit.generation.RoutesGenerator;
 import com.coddweaver.seamless.talk.rabbit.helpers.ExceptionUtils;
 import com.coddweaver.seamless.talk.rabbit.helpers.RoutesGenerationUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -37,7 +36,8 @@ public class LogToDlqRabbitErrorHandler implements RabbitListenerErrorHandler {
         messageHeaders.put("x-stacktrace", ExceptionUtils.getStackTrace(throwable));
 
         amqpTemplate.convertAndSend(RoutesGenerationUtils.DEFAULT_DLX_NAME, failedMessageProperties.getConsumerQueue(), failedMessage);
-        log.error("Failed message log was sent to " + RoutesGenerationUtils.DEFAULT_DLX_NAME + " with " + failedMessageProperties.getConsumerQueue() + " routing key" , throwable);
+        log.error("Failed message log was sent to " + RoutesGenerationUtils.DEFAULT_DLX_NAME + " with "
+                          + failedMessageProperties.getConsumerQueue() + " routing key", throwable);
     }
 
     @Override

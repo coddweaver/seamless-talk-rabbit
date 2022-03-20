@@ -2,10 +2,10 @@ package com.coddweaver.seamless.talk.rabbit.examples.msisharedlib.api.contracts;
 
 
 import com.coddweaver.seamless.talk.rabbit.annotations.SeamlessTalkRabbitContract;
-import com.coddweaver.seamless.talk.rabbit.generation.BaseSeamlessTalkRabbitContract;
+import com.coddweaver.seamless.talk.rabbit.generation.ExchangeType;
 
-@SeamlessTalkRabbitContract(exchangeDefs = {"fanoutTest"}, messageTTL = 600000)
-public interface RecognitionContract extends BaseSeamlessTalkRabbitContract {
+@SeamlessTalkRabbitContract(messageTTL = 600000)
+public interface RepositoryContract {
 
     String myDearRabbit(String data);
 

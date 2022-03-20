@@ -1,4 +1,4 @@
-package com.coddweaver.seamless.talk.rabbit.examples.libraryapi.services.interfaces;
+package com.coddweaver.seamless.talk.rabbit.repositorymanager.services.interfaces;
 
 import org.springframework.web.multipart.MultipartFile;
 
