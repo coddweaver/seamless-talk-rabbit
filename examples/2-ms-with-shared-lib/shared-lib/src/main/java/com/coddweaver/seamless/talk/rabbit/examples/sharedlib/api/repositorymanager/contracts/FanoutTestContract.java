@@ -1,4 +1,4 @@
-package com.coddweaver.seamless.talk.rabbit.examples.msisharedlib.api.repositorymanager.contracts;
+package com.coddweaver.seamless.talk.rabbit.examples.sharedlib.api.repositorymanager.contracts;
 
 import com.coddweaver.seamless.talk.rabbit.annotations.SeamlessTalkRabbitContract;
 import com.coddweaver.seamless.talk.rabbit.generation.ExchangeType;

@@ -165,7 +165,6 @@ public class SeamlessTalkRabbitContractProcessor extends AbstractProcessor {
                 }
                 final TypeName returnType = TypeName.get(method.getReturnType());
                 methodBuilder = methodBuilder.returns(returnType)
-                                             .addException(AmqpTimeoutException.class)
                                              .addCode("return " + "convertSendAndReceive(" + commonStatementPart);
             }
 

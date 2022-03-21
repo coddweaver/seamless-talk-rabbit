@@ -5,7 +5,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
 
 @SpringBootApplication
-@ComponentScan("com.coddweaver.seamless.talk.rabbit.examples.msisharedlib")
 public class LibraryApiApplication {
 
     public static void main(String[] args) {

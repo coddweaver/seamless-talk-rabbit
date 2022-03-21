@@ -13,7 +13,6 @@ public class RestExceptionHandler {
     @ExceptionHandler(value = RuntimeException.class)
     public ResponseEntity runtimeException(RuntimeException exception) {
         log.error("Got an error during controller processing", exception);
-        return new ResponseEntity(exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        return ResponseEntity.internalServerError().body(exception.getMessage());
     }
-
 }

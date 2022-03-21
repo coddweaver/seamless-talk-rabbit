@@ -1,9 +1,9 @@
 package com.coddweaver.seamless.talk.rabbit.repositorymanager.listeners;
 
 import com.coddweaver.seamless.talk.rabbit.annotations.SeamlessTalkRabbitListener;
-import com.coddweaver.seamless.talk.rabbit.examples.msisharedlib.api.repositorymanager.contracts.LibrarySearchContract;
-import com.coddweaver.seamless.talk.rabbit.examples.msisharedlib.api.repositorymanager.dtos.RepositoryRequestDto;
-import com.coddweaver.seamless.talk.rabbit.examples.msisharedlib.api.repositorymanager.dtos.RepositoryResponseDto;
+import com.coddweaver.seamless.talk.rabbit.examples.sharedlib.api.repositorymanager.contracts.LibrarySearchContract;
+import com.coddweaver.seamless.talk.rabbit.examples.sharedlib.api.repositorymanager.dtos.RepositoryRequestDto;
+import com.coddweaver.seamless.talk.rabbit.examples.sharedlib.api.repositorymanager.dtos.RepositoryResponseDto;
 import com.coddweaver.seamless.talk.rabbit.exceptions.NotImplementedException;
 import com.coddweaver.seamless.talk.rabbit.repositorymanager.services.interfaces.StorageService;
 import lombok.RequiredArgsConstructor;

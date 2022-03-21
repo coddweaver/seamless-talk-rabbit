@@ -1,9 +1,9 @@
 package com.coddweaver.seamless.talk.rabbit.examples.libraryapi.controllers;
 
-import com.coddweaver.seamless.talk.rabbit.examples.msisharedlib.api.repositorymanager.contracts.LibraryIOContract;
-import com.coddweaver.seamless.talk.rabbit.examples.msisharedlib.api.repositorymanager.contracts.LibrarySearchContract;
-import com.coddweaver.seamless.talk.rabbit.examples.msisharedlib.api.repositorymanager.dtos.FileDto;
-import com.coddweaver.seamless.talk.rabbit.examples.msisharedlib.api.repositorymanager.dtos.RepositoryRequestDto;
+import com.coddweaver.seamless.talk.rabbit.examples.sharedlib.api.repositorymanager.contracts.LibraryIOContract;
+import com.coddweaver.seamless.talk.rabbit.examples.sharedlib.api.repositorymanager.contracts.LibrarySearchContract;
+import com.coddweaver.seamless.talk.rabbit.examples.sharedlib.api.repositorymanager.dtos.FileDto;
+import com.coddweaver.seamless.talk.rabbit.examples.sharedlib.api.repositorymanager.dtos.RepositoryRequestDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
@@ -14,7 +14,6 @@ import org.springframework.util.MimeType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.activation.MimetypesFileTypeMap;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.FileNameMap;

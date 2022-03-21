@@ -1,15 +1,14 @@
 package com.coddweaver.seamless.talk.rabbit.repositorymanager.listeners;
 
 import com.coddweaver.seamless.talk.rabbit.annotations.SeamlessTalkRabbitListener;
-import com.coddweaver.seamless.talk.rabbit.examples.msisharedlib.api.repositorymanager.contracts.LibraryIOContract;
-import com.coddweaver.seamless.talk.rabbit.examples.msisharedlib.api.repositorymanager.dtos.FileDto;
+import com.coddweaver.seamless.talk.rabbit.examples.sharedlib.api.repositorymanager.contracts.LibraryIOContract;
+import com.coddweaver.seamless.talk.rabbit.examples.sharedlib.api.repositorymanager.dtos.FileDto;
+import com.coddweaver.seamless.talk.rabbit.exceptions.NotImplementedException;
 import com.coddweaver.seamless.talk.rabbit.repositorymanager.services.interfaces.StorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.annotation.RabbitHandler;
 
 import java.io.InputStream;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 @SeamlessTalkRabbitListener
 @RequiredArgsConstructor

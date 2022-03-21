@@ -63,7 +63,7 @@ public class ExceptionAwareJsonMessageConverter extends AbstractJackson2MessageC
             }
         }
 
-        if (objectToConvert instanceof Throwable) {
+        if (objectToConvert instanceof Throwable && !(objectToConvert instanceof InternalServiceErrorException)) {
             objectToConvert = new InternalServiceErrorException((Throwable) objectToConvert);
         }
 
