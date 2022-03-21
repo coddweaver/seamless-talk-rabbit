@@ -1,10 +1,12 @@
 rootProject.name = 'seamless-talk-rabbit'
 
-include 'library-api'
-project(':library-api').projectDir = file("examples/2-ms-with-shared-lib/library-api")
+//Example projects importing
+//It is needed only for example projects working
+include 'examples-2-ms-with-shared-lib-library-api'
+project(':examples-2-ms-with-shared-lib-library-api').projectDir = file("examples/2-ms-with-shared-lib/library-api")
 
-include 'msi-shared-lib'
-project(':msi-shared-lib').projectDir = file("examples/2-ms-with-shared-lib/msi-shared-lib")
+include 'examples-2-ms-with-shared-lib-msi-shared-lib'
+project(':examples-2-ms-with-shared-lib-msi-shared-lib').projectDir = file("examples/2-ms-with-shared-lib/msi-shared-lib")
 
-include 'repository-manager'
-project(':repository-manager').projectDir = file("examples/2-ms-with-shared-lib/repository-manager")
+include 'examples-2-ms-with-shared-lib-repository-manager'
+project(':examples-2-ms-with-shared-lib-repository-manager').projectDir = file("examples/2-ms-with-shared-lib/repository-manager")
