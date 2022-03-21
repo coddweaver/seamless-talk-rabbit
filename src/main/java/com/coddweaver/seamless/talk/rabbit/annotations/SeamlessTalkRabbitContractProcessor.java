@@ -9,6 +9,7 @@ import org.springframework.amqp.AmqpTimeoutException;
 import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.amqp.core.Binding;
 import org.springframework.context.annotation.Primary;
+import org.springframework.stereotype.Service;
 
 import javax.annotation.processing.*;
 import javax.lang.model.SourceVersion;
@@ -21,17 +22,23 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+/**
+ * Annotation processor that performs code generation of Api classes for the @{@link SeamlessTalkRabbitContract} interfaces. It will throw
+ * an {@link IllegalStateException} if found some mistakes in SeamlessTalk contract defining.
+ *
+ * <p>Annotated interfaces can use flexible arguments as defined by {@link SeamlessTalkRabbitContract}.</p>
+ *
+ * @author Andrey Buturlakin
+ * @see SeamlessTalkRabbitContract
+ */
 @SupportedAnnotationTypes(SeamlessTalkRabbitContractProcessor.ANNOTATION_PATH)
 @SupportedSourceVersion(SourceVersion.RELEASE_11)
 public class SeamlessTalkRabbitContractProcessor extends AbstractProcessor {
 
-//region Fields
     public final static String ANNOTATION_PATH = "com.coddweaver.seamless.talk.rabbit.annotations.SeamlessTalkRabbitContract";
     private final static String CLASS_NAME_POSTFIX = "RabbitApi";
-    private final static String EXCHANGE_DEFINITION_BEAN_NAME_PATTERN = "[\\w_-]+";
 
     private Filer filer;
     private Messager messager;
@@ -56,11 +63,12 @@ public class SeamlessTalkRabbitContractProcessor extends AbstractProcessor {
     }
 
     private void processAnnotation(TypeElement annotation, RoundEnvironment roundEnv) {
-        info("Started Seamless Talk rabbit api generation for found contracts: \n" + Strings.join(roundEnv.getElementsAnnotatedWith(annotation)
-                                                                                     .stream()
-                                                                                     .map(Object::toString)
-                                                                                     .collect(
-                                                                                             Collectors.toList()), '\n'));
+        info("Started Seamless Talk rabbit api generation for found contracts: \n" +
+                     Strings.join(roundEnv.getElementsAnnotatedWith(annotation)
+                                          .stream()
+                                          .map(Object::toString)
+                                          .collect(Collectors.toList()),
+                                  '\n'));
 
         final Set<TypeElement> elementsAnnotatedWith = ElementFilter.typesIn(
                 roundEnv.getElementsAnnotatedWith(annotation));
@@ -69,22 +77,16 @@ public class SeamlessTalkRabbitContractProcessor extends AbstractProcessor {
 
     private void processElement(TypeElement typeElement) {
         if (typeElement.getKind() != ElementKind.INTERFACE) {
-            error("Only interface can be annotated with " + SeamlessTalkRabbitContract.class + ". Skipping " + typeElement);
-            return;
+            throw new IllegalStateException(
+                    "Only interface can be annotated with " + SeamlessTalkRabbitContract.class + ". Skipping " + typeElement);
         }
 
         final List<ExecutableElement> methodElements = ElementFilter.methodsIn(
                 elementUtils.getAllMembers(typeElement)
                             .stream()
-                            .filter(x -> x.getEnclosingElement()
-                                          .getKind() == ElementKind.INTERFACE
-                                    && !x.getEnclosingElement()
-                                         .getSimpleName()
-                                         .contentEquals(
-                                                 AbstractRabbitApi.class.getSimpleName())
-                            )
-                            .collect(
-                                    Collectors.toList())
+                            .filter(element -> element.getEnclosingElement()
+                                                      .getKind() == ElementKind.INTERFACE)
+                            .collect(Collectors.toList())
         );
 
         final SeamlessTalkRabbitContract annotation = typeElement.getAnnotation(SeamlessTalkRabbitContract.class);
@@ -113,7 +115,7 @@ public class SeamlessTalkRabbitContractProcessor extends AbstractProcessor {
                                                .addSuperinterface(type.asType())
                                                .superclass(AbstractRabbitApi.class)
                                                .addModifiers(Modifier.PUBLIC)
-                                               .addAnnotation(SeamlessTalkRabbitApi.class)
+                                               .addAnnotation(Service.class)
                                                .addAnnotation(Primary.class)
                                                .addField(FieldSpec.builder(AmqpTemplate.class, amqpTemplateFieldName,
                                                                            Modifier.PRIVATE)
@@ -132,9 +134,9 @@ public class SeamlessTalkRabbitContractProcessor extends AbstractProcessor {
 
 
             if (parameters.size() != 1) {
-                error("Only one parameter required for api generation. Found " + parameters.size() + " in method " + method
-                              + " of interface " + type);
-                return;
+                throw new IllegalStateException(
+                        "Only one parameter required for api generation. Found " + parameters.size() + " in method " + method
+                                + " of interface " + type);
             }
 
             VariableElement payloadParameter = parameters.get(0);
@@ -156,6 +158,11 @@ public class SeamlessTalkRabbitContractProcessor extends AbstractProcessor {
                 methodBuilder = methodBuilder.returns(TypeName.VOID)
                                              .addCode("convertAndSend(" + commonStatementPart);
             } else {
+                if (exchangeType == ExchangeType.FANOUT) {
+                    throw new IllegalStateException(
+                            "Found method " + method + " with return value despite of set exchangeType=FANOUT in contract " + type
+                                    + ".\n ReplyTo functionality cannot work with FANOUT exchanges. Please provide only void methods for FANOUT contracts.");
+                }
                 final TypeName returnType = TypeName.get(method.getReturnType());
                 methodBuilder = methodBuilder.returns(returnType)
                                              .addException(AmqpTimeoutException.class)
@@ -175,16 +182,12 @@ public class SeamlessTalkRabbitContractProcessor extends AbstractProcessor {
             build1.writeTo(filer);
         }
         catch (IOException e) {
-            error(e.toString());
+            throw new IllegalStateException(e);
         }
     }
 
     private void warn(String msg) {
         messager.printMessage(Diagnostic.Kind.WARNING, msg);
-    }
-
-    private void error(String msg) {
-        messager.printMessage(Diagnostic.Kind.ERROR, msg);
     }
 
     private void info(String msg) {
@@ -193,14 +196,5 @@ public class SeamlessTalkRabbitContractProcessor extends AbstractProcessor {
 
     private String generateClassName(String typeName) {
         return typeName + CLASS_NAME_POSTFIX;
-    }
-
-    private String firstToUpper(String str) {
-        return str.substring(0, 1)
-                  .toUpperCase() + str.substring(1);
-    }
-
-    private boolean validateExchangeDefinitionBeanName(String exchangeDefinitionBeanName) {
-        return Pattern.matches("[\\w]+", exchangeDefinitionBeanName);
     }
 }

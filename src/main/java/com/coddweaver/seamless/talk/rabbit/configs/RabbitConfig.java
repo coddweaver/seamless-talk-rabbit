@@ -2,8 +2,6 @@ package com.coddweaver.seamless.talk.rabbit.configs;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.amqp.rabbit.connection.ConnectionFactory;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.boot.autoconfigure.amqp.RabbitProperties;
 import org.springframework.boot.autoconfigure.amqp.RabbitTemplateConfigurer;
@@ -11,31 +9,32 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * Initializes {@link RabbitTemplateConfigurer} with default MessageConverter.
+ * <p><Also creates a beans for {@link MessageConverter} and {@link ObjectMapper}.</p>
+ *
+ * @author Andrey Buturlakin
+ */
 @Configuration
 @ComponentScan("com.coddweaver.seamless.talk.rabbit")
-@SuppressWarnings({"SpringJavaInjectionPointsAutowiringInspection"})
-public class RabbitTemplateConfig {
+public class RabbitConfig {
 
     private final RabbitProperties properties;
 
 
-    public RabbitTemplateConfig(RabbitProperties properties) {
+    public RabbitConfig(RabbitProperties properties) {
         this.properties = properties;
     }
 
     @Bean
-    public RabbitTemplate jsonRabbitTemplate(ConnectionFactory connectionFactory) {
+    public RabbitTemplateConfigurer jsonRabbitTemplate() {
         RabbitTemplateConfigurer configurer = new RabbitTemplateConfigurer(properties);
-        RabbitTemplate template = new RabbitTemplate();
-        configurer.configure(template, connectionFactory);
-
-        template.setMessageConverter(jsonMessageConverter(generateObjectMapper()));
-
-        return template;
+        configurer.setMessageConverter(jsonMessageConverter(unknownsIgnoringObjectMapper()));
+        return configurer;
     }
 
     @Bean
-    public ObjectMapper generateObjectMapper() {
+    public ObjectMapper unknownsIgnoringObjectMapper() {
         return new ObjectMapper()
                 .addHandler(new JacksonExceptionHandler())
                 .configure(DeserializationFeature.

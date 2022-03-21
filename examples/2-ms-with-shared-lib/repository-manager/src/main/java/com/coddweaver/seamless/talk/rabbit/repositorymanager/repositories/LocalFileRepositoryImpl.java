@@ -4,6 +4,7 @@ import com.coddweaver.seamless.talk.rabbit.repositorymanager.repositories.interf
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.apache.logging.log4j.util.Strings;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 

@@ -1,35 +1,29 @@
 package com.coddweaver.seamless.talk.rabbit.annotations;
 
+import com.coddweaver.seamless.talk.rabbit.configs.LogToDlqRabbitErrorHandler;
 import com.coddweaver.seamless.talk.rabbit.generation.RoutesGenerator;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.amqp.core.AcknowledgeMode;
-import org.springframework.amqp.core.AmqpAdmin;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.annotation.RabbitHandler;
 import org.springframework.amqp.rabbit.annotation.RabbitListenerConfigurer;
 import org.springframework.amqp.rabbit.config.RabbitListenerConfigUtils;
-import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.listener.MethodRabbitListenerEndpoint;
 import org.springframework.amqp.rabbit.listener.MultiMethodRabbitListenerEndpoint;
 import org.springframework.amqp.rabbit.listener.RabbitListenerEndpointRegistrar;
 import org.springframework.amqp.rabbit.listener.RabbitListenerEndpointRegistry;
 import org.springframework.amqp.rabbit.listener.adapter.ReplyPostProcessor;
 import org.springframework.amqp.rabbit.listener.api.RabbitListenerErrorHandler;
-import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.aop.framework.Advised;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.*;
 import org.springframework.beans.factory.config.*;
-import org.springframework.context.EnvironmentAware;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.expression.StandardBeanExpressionResolver;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.core.convert.support.DefaultConversionService;
-import org.springframework.core.env.Environment;
-import org.springframework.core.task.TaskExecutor;
 import org.springframework.lang.Nullable;
 import org.springframework.messaging.handler.annotation.support.DefaultMessageHandlerMethodFactory;
 import org.springframework.messaging.handler.annotation.support.MessageHandlerMethodFactory;
@@ -44,27 +38,41 @@ import org.springframework.validation.Validator;
 import java.lang.reflect.Method;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
+
+/**
+ * Bean post-processor that registers methods annotated with {@link SeamlessTalkRabbitListener} to be invoked by a AMQP message listener
+ * container created under the cover by a {@link org.springframework.amqp.rabbit.listener.RabbitListenerContainerFactory} according to the
+ * parameters of the annotation.
+ *
+ * <p>Annotated classes can use flexible arguments as defined by {@link SeamlessTalkRabbitListener}.</p>
+ *
+ * <p>All processed listeners will have {@link LogToDlqRabbitErrorHandler} set by default which allows to put messages in bound dlq even
+ * when listener's returnExceptions feature is enabled. By the way, this feature is enabled by default here and cannot be overridden.</p>
+ *
+ * @author Andrey Buturlakin
+ * @see SeamlessTalkRabbitListener
+ * @see RoutesGenerator
+ * @see RabbitListenerEndpointRegistrar
+ * @see MethodRabbitListenerEndpoint
+ */
 @Configuration
 @Slf4j
 public class SeamlessTalkRabbitListenerBeanPostProcessor implements BeanPostProcessor,
                                                                     Ordered,
                                                                     BeanFactoryAware,
-                                                                    EnvironmentAware,
                                                                     SmartInitializingSingleton {
 
-//region Fields
     public static final String DEFAULT_RABBIT_LISTENER_CONTAINER_FACTORY_BEAN_NAME = "rabbitListenerContainerFactory";
 
-    public static final String RABBIT_EMPTY_STRING_ARGUMENTS_PROPERTY = "spring.rabbitmq.emptyStringArguments";
-    private final Set<String> emptyStringArguments = new HashSet<>();
     private final RabbitHandlerMethodFactoryAdapter messageHandlerMethodFactory =
             new RabbitHandlerMethodFactoryAdapter();
     private final RabbitListenerEndpointRegistrar registrar = new RabbitListenerEndpointRegistrar();
     private final AtomicInteger counter = new AtomicInteger();
-    private final String defaultContainerFactoryBeanName = DEFAULT_RABBIT_LISTENER_CONTAINER_FACTORY_BEAN_NAME;
     private final Charset charset = StandardCharsets.UTF_8;
     private BeanFactory beanFactory;
     @Nullable
@@ -73,21 +81,9 @@ public class SeamlessTalkRabbitListenerBeanPostProcessor implements BeanPostProc
     private BeanExpressionContext expressionContext;
     private RoutesGenerator routesGenerator;
 
-    public SeamlessTalkRabbitListenerBeanPostProcessor() {
-        this.emptyStringArguments.add("x-dead-letter-exchange");
-    }
-
     @Override
     public int getOrder() {
         return LOWEST_PRECEDENCE;
-    }
-
-    @Override
-    public void setEnvironment(Environment environment) {
-        String property = environment.getProperty(RABBIT_EMPTY_STRING_ARGUMENTS_PROPERTY, String.class);
-        if (property != null) {
-            this.emptyStringArguments.addAll(StringUtils.commaDelimitedListToSet(property));
-        }
     }
 
     @Override
@@ -122,9 +118,7 @@ public class SeamlessTalkRabbitListenerBeanPostProcessor implements BeanPostProc
             this.registrar.setEndpointRegistry(this.endpointRegistry);
         }
 
-        if (this.defaultContainerFactoryBeanName != null) {
-            this.registrar.setContainerFactoryBeanName(this.defaultContainerFactoryBeanName);
-        }
+        this.registrar.setContainerFactoryBeanName(DEFAULT_RABBIT_LISTENER_CONTAINER_FACTORY_BEAN_NAME);
 
         // Set the custom handler method factory once resolved by the configurer
         MessageHandlerMethodFactory handlerMethodFactory = this.registrar.getMessageHandlerMethodFactory();
@@ -192,18 +186,15 @@ public class SeamlessTalkRabbitListenerBeanPostProcessor implements BeanPostProc
         endpoint.setQueueNames(resolveQueues(bean));
         endpoint.setConcurrency(resolveExpressionAsStringOrInteger(rabbitListener.concurrency(), "concurrency"));
         endpoint.setBeanFactory(this.beanFactory);
-        endpoint.setReturnExceptions(resolveExpressionAsBoolean(rabbitListener.returnExceptions()));
-        resolveErrorHandler(endpoint, rabbitListener);
+        endpoint.setReturnExceptions(true);
+        endpoint.setErrorHandler(resolveErrorHandler());
+
         String group = rabbitListener.group();
         if (StringUtils.hasText(group)) {
             Object resolvedGroup = resolveExpression(group);
             if (resolvedGroup instanceof String) {
                 endpoint.setGroup((String) resolvedGroup);
             }
-        }
-        String autoStartup = rabbitListener.autoStartup();
-        if (StringUtils.hasText(autoStartup)) {
-            endpoint.setAutoStartup(resolveExpressionAsBoolean(autoStartup));
         }
 
         endpoint.setExclusive(rabbitListener.exclusive());
@@ -218,12 +209,7 @@ public class SeamlessTalkRabbitListenerBeanPostProcessor implements BeanPostProc
             }
         }
 
-        resolveExecutor(endpoint, rabbitListener, target, beanName);
-        resolveAdmin(endpoint, rabbitListener, target);
-        resolveAckMode(endpoint, rabbitListener);
         resolvePostProcessor(endpoint, rabbitListener, target, beanName);
-        resolveMessageConverter(endpoint, rabbitListener, target, beanName);
-        resolveReplyContentType(endpoint, rabbitListener);
 
         this.registrar.registerEndpoint(endpoint, null);
     }
@@ -296,73 +282,8 @@ public class SeamlessTalkRabbitListenerBeanPostProcessor implements BeanPostProc
         return method;
     }
 
-    private void resolveErrorHandler(MethodRabbitListenerEndpoint endpoint, SeamlessTalkRabbitListener rabbitListener) {
-        Object errorHandler = resolveExpression(rabbitListener.errorHandler());
-        if (errorHandler instanceof RabbitListenerErrorHandler) {
-            endpoint.setErrorHandler((RabbitListenerErrorHandler) errorHandler);
-        } else {
-            String errorHandlerBeanName = resolveExpressionAsString(rabbitListener.errorHandler(), "errorHandler");
-            if (StringUtils.hasText(errorHandlerBeanName)) {
-                endpoint.setErrorHandler(
-                        this.beanFactory.getBean(errorHandlerBeanName, RabbitListenerErrorHandler.class));
-            }
-        }
-    }
-
-    private void resolveAckMode(MethodRabbitListenerEndpoint endpoint, SeamlessTalkRabbitListener rabbitListener) {
-        String ackModeAttr = rabbitListener.ackMode();
-        if (StringUtils.hasText(ackModeAttr)) {
-            Object ackMode = resolveExpression(ackModeAttr);
-            if (ackMode instanceof String) {
-                endpoint.setAckMode(AcknowledgeMode.valueOf((String) ackMode));
-            } else if (ackMode instanceof AcknowledgeMode) {
-                endpoint.setAckMode((AcknowledgeMode) ackMode);
-            } else {
-                Assert.isNull(ackMode, "ackMode must resolve to a String or AcknowledgeMode");
-            }
-        }
-    }
-
-    private void resolveAdmin(MethodRabbitListenerEndpoint endpoint, SeamlessTalkRabbitListener rabbitListener, Object adminTarget) {
-        Object resolved = resolveExpression(rabbitListener.admin());
-        if (resolved instanceof AmqpAdmin) {
-            endpoint.setAdmin((AmqpAdmin) resolved);
-        } else {
-            String rabbitAdmin = resolveExpressionAsString(rabbitListener.admin(), "admin");
-            if (StringUtils.hasText(rabbitAdmin)) {
-                Assert.state(this.beanFactory != null, "BeanFactory must be set to resolve RabbitAdmin by bean name");
-                try {
-                    endpoint.setAdmin(this.beanFactory.getBean(rabbitAdmin, RabbitAdmin.class));
-                }
-                catch (NoSuchBeanDefinitionException ex) {
-                    throw new BeanInitializationException("Could not register rabbit listener endpoint on [" +
-                                                                  adminTarget + "], no " + RabbitAdmin.class.getSimpleName() + " with id '"
-                                                                  +
-                                                                  rabbitAdmin + "' was found in the application context", ex);
-                }
-            }
-        }
-    }
-
-    private void resolveExecutor(MethodRabbitListenerEndpoint endpoint, SeamlessTalkRabbitListener rabbitListener,
-            Object execTarget, String beanName) {
-
-        Object resolved = resolveExpression(rabbitListener.executor());
-        if (resolved instanceof TaskExecutor) {
-            endpoint.setTaskExecutor((TaskExecutor) resolved);
-        } else {
-            String execBeanName = resolveExpressionAsString(rabbitListener.executor(), "executor");
-            if (StringUtils.hasText(execBeanName)) {
-                assertBeanFactory();
-                try {
-                    endpoint.setTaskExecutor(this.beanFactory.getBean(execBeanName, TaskExecutor.class));
-                }
-                catch (NoSuchBeanDefinitionException ex) {
-                    throw new BeanInitializationException(
-                            noBeanFoundMessage(execTarget, beanName, execBeanName, TaskExecutor.class), ex);
-                }
-            }
-        }
+    private RabbitListenerErrorHandler resolveErrorHandler() {
+        return this.beanFactory.getBean(LogToDlqRabbitErrorHandler.BEAN_NAME, RabbitListenerErrorHandler.class);
     }
 
     private void resolvePostProcessor(MethodRabbitListenerEndpoint endpoint, SeamlessTalkRabbitListener rabbitListener,
@@ -383,35 +304,6 @@ public class SeamlessTalkRabbitListenerBeanPostProcessor implements BeanPostProc
                             noBeanFoundMessage(target, beanName, ppBeanName, ReplyPostProcessor.class), ex);
                 }
             }
-        }
-    }
-
-    private void resolveMessageConverter(MethodRabbitListenerEndpoint endpoint, SeamlessTalkRabbitListener rabbitListener,
-            Object target, String beanName) {
-
-        Object resolved = resolveExpression(rabbitListener.messageConverter());
-        if (resolved instanceof MessageConverter) {
-            endpoint.setMessageConverter((MessageConverter) resolved);
-        } else {
-            String mcBeanName = resolveExpressionAsString(rabbitListener.messageConverter(), "messageConverter");
-            if (StringUtils.hasText(mcBeanName)) {
-                assertBeanFactory();
-                try {
-                    endpoint.setMessageConverter(this.beanFactory.getBean(mcBeanName, MessageConverter.class));
-                }
-                catch (NoSuchBeanDefinitionException ex) {
-                    throw new BeanInitializationException(
-                            noBeanFoundMessage(target, beanName, mcBeanName, MessageConverter.class), ex);
-                }
-            }
-        }
-    }
-
-    private void resolveReplyContentType(MethodRabbitListenerEndpoint endpoint, SeamlessTalkRabbitListener rabbitListener) {
-        String contentType = resolveExpressionAsString(rabbitListener.replyContentType(), "replyContentType");
-        if (StringUtils.hasText(contentType)) {
-            endpoint.setReplyContentType(contentType);
-            endpoint.setConverterWinsContentType(resolveExpressionAsBoolean(rabbitListener.converterWinsContentType()));
         }
     }
 
@@ -450,14 +342,6 @@ public class SeamlessTalkRabbitListenerBeanPostProcessor implements BeanPostProc
         return this.resolver.evaluate(resolvedValue, this.expressionContext);
     }
 
-    private boolean resolveExpressionAsBoolean(String value) {
-        return resolveExpressionAsBoolean(value, false);
-    }
-
-    private boolean resolveExpressionAsBooleanTrueDef(String value) {
-        return resolveExpressionAsBoolean(value, true);
-    }
-
     private boolean resolveExpressionAsBoolean(String value, boolean defaultValue) {
         Object resolved = resolveExpression(value);
         if (resolved instanceof Boolean) {
@@ -484,31 +368,6 @@ public class SeamlessTalkRabbitListenerBeanPostProcessor implements BeanPostProc
         } else {
             throw new IllegalStateException("The [" + attribute + "] must resolve to a String. "
                                                     + "Resolved to [" + resolved.getClass() + "] for [" + value + "]");
-        }
-    }
-
-    private void resolveAsString(Object resolvedValue, List<String> result, boolean canBeQueue, String what) {
-        Object resolvedValueToUse = resolvedValue;
-        if (resolvedValue instanceof String[]) {
-            resolvedValueToUse = Arrays.asList((String[]) resolvedValue);
-        }
-        if (canBeQueue && resolvedValueToUse instanceof Queue) {
-            result.add(((Queue) resolvedValueToUse).getName());
-        } else if (resolvedValueToUse instanceof String) {
-            result.add((String) resolvedValueToUse);
-        } else if (resolvedValueToUse instanceof Iterable) {
-            for (Object object : (Iterable<Object>) resolvedValueToUse) {
-                resolveAsString(object, result, canBeQueue, what);
-            }
-        } else {
-            throw new IllegalArgumentException(String.format(
-                    "@AutoGenRabbitListener."
-                            + what
-                            + " can't resolve '%s' as a String[] or a String "
-                            + (canBeQueue
-                               ? "or a Queue"
-                               : ""),
-                    resolvedValue));
         }
     }
 

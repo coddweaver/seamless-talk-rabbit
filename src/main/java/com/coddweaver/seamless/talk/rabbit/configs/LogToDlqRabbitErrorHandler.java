@@ -12,9 +12,20 @@ import org.springframework.stereotype.Component;
 
 import java.util.Map;
 
+import static com.coddweaver.seamless.talk.rabbit.configs.LogToDlqRabbitErrorHandler.BEAN_NAME;
+
+/**
+ * On error handling sends a message to bound dlq with extended format, including exception message and stacktrace using bean of {@link
+ * AmqpTemplate}.
+ *
+ * @author Andrey Buturlakin
+ * @see com.coddweaver.seamless.talk.rabbit.annotations.SeamlessTalkRabbitListenerBeanPostProcessor
+ */
 @Slf4j
-@Component("logToDlqRabbitErrorHandler")
+@Component(BEAN_NAME)
 public class LogToDlqRabbitErrorHandler implements RabbitListenerErrorHandler {
+
+    public final static String BEAN_NAME = "logToDlqRabbitErrorHandler";
 
     private final AmqpTemplate amqpTemplate;
 

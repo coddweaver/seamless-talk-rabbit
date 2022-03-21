@@ -18,6 +18,17 @@ import java.util.Set;
 import static com.coddweaver.seamless.talk.rabbit.helpers.RoutesGenerationUtils.*;
 
 
+/**
+ * Performs routes auto-generation in Rabbit, depends on parameters in all found {@link SeamlessTalkRabbitContract}.
+ *
+ * <p>Depends on {@link SeamlessTalkRabbitContract#exchangeType()} it will create:</p>
+ * <p>- either a single queue for all listeber with the name of contract and bind it to default direct exchange;</p>
+ * <p>- or a special exchange for the contracnt and a queue for every listener with the name of it and bind them together; </p>
+ *
+ * @author Andrey Buturlakin
+ * @see SeamlessTalkRabbitContract
+ */
+
 @SuppressWarnings("UnusedReturnValue")
 @Service
 @Slf4j
@@ -60,7 +71,7 @@ public final class RoutesGenerator {
             defineDefaultBinding(contract, queue);
         } else {
             final Exchange exchange = defineExchange(contract);
-            defineBinding(contract, listenerClass, queue, exchange);
+            defineFanoutBinding(contract, listenerClass, queue, exchange);
         }
 
         return queue;
@@ -70,30 +81,28 @@ public final class RoutesGenerator {
         final String destination = generateQueueName(contract);
 
         SeamlessTalkRabbitContract params = getContractParams(contract);
-        if (params.exchangeType() == ExchangeType.DIRECT) {
-            return new Binding(destination,
-                               Binding.DestinationType.EXCHANGE,
-                               defaultExchange.getName(),
-                               destination, null);
-        } else {
+        if (params.exchangeType() == ExchangeType.FANOUT) {
             return new Binding(destination,
                                Binding.DestinationType.EXCHANGE,
                                RoutesGenerationUtils.generateExchangeName(contract),
-                               destination, null);
+                               Strings.EMPTY, null);
         }
 
-
+        return new Binding(destination,
+                           Binding.DestinationType.EXCHANGE,
+                           defaultExchange.getName(),
+                           destination, null);
     }
 
     private Queue defineQueue(Class<?> contract, Class<?> listenerClass) {
         SeamlessTalkRabbitContract params = getContractParams(contract);
 
         String queueName;
-        String additionalBeanNamePart;
+        String beanNamePostfix;
         QueueBuilder queueBuilder;
         if (params.exchangeType() == ExchangeType.DIRECT) {
             queueName = generateQueueName(contract);
-            additionalBeanNamePart = "";
+            beanNamePostfix = "";
         } else {
             if (Strings.isNotBlank(this.applicationName)) {
                 queueName = generateQueueName(contract) + "." + this.applicationName + "." + listenerClass.getSimpleName();
@@ -103,40 +112,26 @@ public final class RoutesGenerator {
                                  + "queue name contains canonical name of class. Found in " + listenerClass);
                 queueName = generateQueueName(contract) + "." + listenerClass.getCanonicalName();
             }
-            additionalBeanNamePart = listenerClass.getSimpleName();
+            beanNamePostfix = listenerClass.getSimpleName();
         }
 
-        if (Strings.isNotBlank(params.name())) {
-            queueName = params.name();
-            additionalBeanNamePart = CaseUtils.convert(queueName, CaseFormat.UPPER_CAMEL);
+        if (Strings.isNotBlank(params.queueName())) {
+            queueName = params.queueName();
+            beanNamePostfix = CaseUtils.convert(queueName, CaseFormat.UPPER_CAMEL);
         }
 
-        String queueBeanName = generateQueueBeanName(contract, additionalBeanNamePart);
+        String queueBeanName = generateQueueBeanName(contract, beanNamePostfix);
         queueBuilder = params.durable()
                        ? QueueBuilder.durable(queueName)
                        : QueueBuilder.nonDurable(queueName);
         if (params.lazy()) {
             queueBuilder = queueBuilder.lazy();
         }
-        if (params.messageTTL() > 0) {
-            queueBuilder = queueBuilder.ttl(params.messageTTL());
+        if (params.messageTtl() > 0) {
+            queueBuilder = queueBuilder.ttl(params.messageTtl());
         }
 
-        if (params.exchangeType() != ExchangeType.DIRECT) {
-            queueBuilder = queueBuilder.autoDelete();
-        }
-
-        final Queue dlq = QueueBuilder.nonDurable(generateDlqName(queueName))
-                                      .build();
-        final String dlqBeanName = generateDlqBeanName(contract, additionalBeanNamePart);
-        beanFactory.registerSingleton(dlqBeanName, dlq);
-
-        final Binding binding = BindingBuilder.bind(dlq)
-                                              .to(defaultDlx)
-                                              .with(queueName)
-                                              .noargs();
-        final String dlqBindingName = generateDlqBindingBeanName(contract, additionalBeanNamePart);
-        beanFactory.registerSingleton(dlqBindingName, binding);
+        defineDlq(contract, queueName, beanNamePostfix);
 
         queueBuilder = queueBuilder
                 .deadLetterExchange(DEFAULT_DLX_NAME)
@@ -148,6 +143,20 @@ public final class RoutesGenerator {
         readyContracts.add(contract);
 
         return queue;
+    }
+
+    private void defineDlq(Class<?> contract, String queueName, String beanNamePostfix) {
+        final Queue dlq = QueueBuilder.nonDurable(generateDlqName(queueName))
+                                      .build();
+        final String dlqBeanName = generateDlqBeanName(contract, beanNamePostfix);
+        beanFactory.registerSingleton(dlqBeanName, dlq);
+
+        final Binding binding = BindingBuilder.bind(dlq)
+                                              .to(defaultDlx)
+                                              .with(queueName)
+                                              .noargs();
+        final String dlqBindingName = generateDlqBindingBeanName(contract, beanNamePostfix);
+        beanFactory.registerSingleton(dlqBindingName, binding);
     }
 
     private Exchange defineDefaultExchange(String exchangeName, String exchangeBeanName, boolean durable) {
@@ -199,7 +208,7 @@ public final class RoutesGenerator {
         return exchange;
     }
 
-    private Binding defineBinding(Class<?> contract, Class<?> listenerClass, Queue queue, Exchange exchange) {
+    private Binding defineFanoutBinding(Class<?> contract, Class<?> listenerClass, Queue queue, Exchange exchange) {
         Binding binding = createBinding(queue, exchange);
 
         final String bindingName = generateBindingBeanName(contract, listenerClass.getSimpleName());

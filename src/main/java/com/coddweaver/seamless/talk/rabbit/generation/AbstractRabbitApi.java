@@ -5,6 +5,16 @@ import org.springframework.amqp.core.AmqpTemplate;
 
 import java.util.Arrays;
 
+/**
+ * Base class for generated Rabbit api classes implementing {@link com.coddweaver.seamless.talk.rabbit.annotations.SeamlessTalkRabbitContract}.
+ * Wraps work with {@link AmqpTemplate}.
+ *
+ * <p>If amqpTemplate returns the result equal to null (frequently happens on reply timeout expiring), throws an {@link
+ * AmqpTimeoutException}.</p>
+ *
+ * @author Andrey Buturlakin
+ * @see com.coddweaver.seamless.talk.rabbit.annotations.SeamlessTalkRabbitContract
+ */
 public abstract class AbstractRabbitApi {
 
     private String getApiMethodName() {

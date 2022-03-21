@@ -8,6 +8,12 @@ import com.fasterxml.jackson.databind.deser.DeserializationProblemHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.converter.MessageConversionException;
 
+/**
+ * Small and useful error handler for exact logging failed property during deserialization.
+ *
+ * @author Andrey Buturlakin
+ * @see RabbitConfig#unknownsIgnoringObjectMapper()
+ */
 @Slf4j
 public class JacksonExceptionHandler extends DeserializationProblemHandler {
 

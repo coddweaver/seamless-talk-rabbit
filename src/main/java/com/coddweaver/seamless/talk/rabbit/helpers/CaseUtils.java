@@ -4,6 +4,13 @@ import com.google.common.base.CaseFormat;
 
 import java.util.regex.Pattern;
 
+/**
+ * Contains some useful methods for case translating. Based on {@link CaseFormat}.
+ * <p>{@link CaseUtils#convert(String, CaseFormat)} can automatically detect current CaseFormat using regex.
+ *
+ * @author Andrey Buturlakin
+ * @see CaseFormat
+ */
 public class CaseUtils {
 
     private final static Pattern camelPattern = Pattern.compile("[a-z]+(?:[A-Z0-9]+[a-z0-9]+[A-Za-z0-9]*)*");
@@ -52,11 +59,13 @@ public class CaseUtils {
 
 
     public static String firstToUpper(String str) {
-        return str.substring(0, 1).toUpperCase() + str.substring(1);
+        return str.substring(0, 1)
+                  .toUpperCase() + str.substring(1);
     }
 
     public static String firstToLower(String str) {
-        return str.substring(0, 1).toUpperCase() + str.substring(1);
+        return str.substring(0, 1)
+                  .toUpperCase() + str.substring(1);
     }
 
 }
