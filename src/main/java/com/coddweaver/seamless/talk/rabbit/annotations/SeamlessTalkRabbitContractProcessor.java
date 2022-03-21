@@ -135,7 +135,7 @@ public class SeamlessTalkRabbitContractProcessor extends AbstractProcessor {
 
             if (parameters.size() != 1) {
                 throw new IllegalStateException(
-                        "Only one parameter required for api generation. Found " + parameters.size() + " in method " + method
+                        "Only one parameter can exists for rabbit api generation. Found " + parameters.size() + " in method " + method
                                 + " of interface " + type);
             }
 

@@ -26,32 +26,14 @@ import java.lang.annotation.Target;
 public @interface SeamlessTalkRabbitContract {
 
     /**
-     * The name of the queue to be generated in Rabbit to which listener will be attached.
-     * <p>If none is specified an auto-generated one is provided.</p>
+     * Sets the durable argument for the queue.
+     * <p>Default: {@code false}</p>
      *
-     * @return the queue name to be generated in Rabbit and listen.
-     *
-     * @see com.coddweaver.seamless.talk.rabbit.generation.RoutesGenerator
-     */
-    String queueName() default "";
-
-    /**
-     * Sets the durable argument for the queue. Default: {@code false}
-     *
-     * @return the {@code durable} boolean flag.
+     * @return boolean flag.
      *
      * @see com.coddweaver.seamless.talk.rabbit.generation.RoutesGenerator
      */
     boolean durable() default false;
-
-
-    /**
-     * When {@code true}, a single consumer in the container will have exclusive use of the
-     * {@link #queues()}, preventing other consumers from receiving messages from the
-     * queues. When {@code true}, requires a concurrency of 1. .
-     * @return the {@code exclusive} boolean flag.
-     */
-
 
     /**
      * The type of exchange to be generated in Rabbit to which according queue will be bound. Default: {@code ExchangeType.DIRECT}
@@ -63,20 +45,33 @@ public @interface SeamlessTalkRabbitContract {
     ExchangeType exchangeType() default ExchangeType.DIRECT;
 
     /**
-     * Sets the lazy argument for the queue. Default: {@code false}
+     * Sets the lazy argument for the queue.
+     * <p>Default: {@code false}</p>
      *
-     * @return the {@code lazy} boolean flag.
+     * @return boolean flag.
      *
      * @see com.coddweaver.seamless.talk.rabbit.generation.RoutesGenerator
      */
     boolean lazy() default false;
 
     /**
-     * Sets the message TTL argument for the queue. Default: {@code 0}
+     * Sets the message TTL argument for the queue.
+     * <p>0 means that messageTTL will not set.</p>
+     * <p>Default: {@code 0}</p>
      *
-     * @return the {@code lazy} boolean flag.
+     * @return boolean flag.
      *
      * @see com.coddweaver.seamless.talk.rabbit.generation.RoutesGenerator
      */
     int messageTtl() default 0;
+
+    /**
+     * Enables dlq generation and binding for contract's queues
+     * <p>Default: {@code true}</p>
+     *
+     * @return boolean flag.
+     *
+     * @see com.coddweaver.seamless.talk.rabbit.generation.RoutesGenerator
+     */
+    boolean dlqEnabled() default true;
 }

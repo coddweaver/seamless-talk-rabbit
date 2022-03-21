@@ -1,100 +1,112 @@
 package com.coddweaver.seamless.talk.rabbit.examples.libraryapi.controllers;
 
-import com.coddweaver.seamless.talk.rabbit.examples.msisharedlib.api.contracts.CustomContract;
-import com.coddweaver.seamless.talk.rabbit.examples.msisharedlib.api.contracts.LibraryContract;
-import com.coddweaver.seamless.talk.rabbit.examples.msisharedlib.api.contracts.RepositoryContract;
-import com.coddweaver.seamless.talk.rabbit.examples.msisharedlib.dtos.FooBarDto;
-import lombok.AllArgsConstructor;
+import com.coddweaver.seamless.talk.rabbit.examples.msisharedlib.api.repositorymanager.contracts.LibraryIOContract;
+import com.coddweaver.seamless.talk.rabbit.examples.msisharedlib.api.repositorymanager.contracts.LibrarySearchContract;
+import com.coddweaver.seamless.talk.rabbit.examples.msisharedlib.api.repositorymanager.dtos.FileDto;
+import com.coddweaver.seamless.talk.rabbit.examples.msisharedlib.api.repositorymanager.dtos.RepositoryRequestDto;
+import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.MimeType;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import javax.activation.MimetypesFileTypeMap;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.net.FileNameMap;
+import java.net.URLConnection;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
 
 @RestController
-@AllArgsConstructor
 @RequestMapping("library")
+@RequiredArgsConstructor
 public class LibraryController {
 
-    private final RepositoryContract repositoryContract;
-    private final CustomContract customContract;
-    private final LibraryContract libraryContract;
+    private final LibraryIOContract libraryIOContract;
+    private final LibrarySearchContract librarySearchContract;
 
-
-    @GetMapping("/processMessage")
-    ResponseEntity processMessage(@RequestParam("message") String message) {
-        libraryContract.fanoutMessage(message);
-        return ResponseEntity.ok()
-                             .build();
+    @RequestMapping(
+            path = "/save",
+            method = RequestMethod.POST,
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    String saveFile(@RequestParam("file") MultipartFile file, @RequestParam(value = "path", defaultValue = "") String path)
+            throws IOException {
+        libraryIOContract.save(FileDto.builder()
+                                      .data(file.getBytes())
+                                      .path(path)
+                                      .build());
+        return "Success";
     }
 
-    @GetMapping("/myDearRabbit")
-    ResponseEntity myDearRabbit(@RequestParam("message") String message) {
-        final String answer = repositoryContract.myDearRabbit(message);
+    @GetMapping("/get")
+    ResponseEntity<Resource> getFile(@RequestParam("filepath") String filepath) {
+        final FileDto fileDto = libraryIOContract.get(filepath);
+        final Path path = Paths.get(fileDto.getPath());
         return ResponseEntity.ok()
-                             .body("Answer is: " + answer);
+                             .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + path.getFileName()
+                                                                                                      .toString() + "\"")
+                             .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                             .body(new InputStreamResource(new ByteArrayInputStream(fileDto.getData())));
     }
 
-    @GetMapping("/testRabbit")
-    ResponseEntity testRabbit(@RequestParam("message") Integer message) {
-        customContract.testRabbit(message);
+    @GetMapping("/read")
+    ResponseEntity<Resource> readFile(@RequestParam("filepath") String filepath) {
+        final FileDto fileDto = libraryIOContract.get(filepath);
+        final Path path = Paths.get(fileDto.getPath());
+        final FileNameMap fileNameMap = URLConnection.getFileNameMap();
+        final String contentType = fileNameMap.getContentTypeFor(path.getFileName()
+                                                                           .toString());
         return ResponseEntity.ok()
-                             .body("Message sended successfully. Look at logs there");
+                             .contentType(MediaType.asMediaType(MimeType.valueOf(contentType)))
+                             .body(new InputStreamResource(new ByteArrayInputStream(fileDto.getData())));
     }
 
-    @GetMapping("/testRabbitRpc")
-    ResponseEntity testRabbitRpc(@RequestParam("message") String message) {
-        final String answer = customContract.testRabbitRpc(message);
-        return ResponseEntity.ok()
-                             .body("Got an answer back: \n" + answer);
+    @GetMapping("/listAllFiles")
+    List<String> listAllFiles() {
+        return librarySearchContract.handle(RepositoryRequestDto.builder()
+                                                                .operation(RepositoryRequestDto.Operation.LIST_ALL_FILES)
+                                                                .build())
+                                    .getBody();
     }
 
-    @PostMapping("/testRabbitMessageConversion")
-    ResponseEntity testRabbitMessageConversion(@RequestBody FooBarDto message) {
-        final FooBarDto answer = customContract.testRabbitMessageConversion(message);
-        return ResponseEntity.ok()
-                             .body("Got an answer back: \n" + answer);
+    @GetMapping("/listAllFolders")
+    List<String> listAllFolders() {
+        return librarySearchContract.handle(RepositoryRequestDto.builder()
+                                                                .operation(RepositoryRequestDto.Operation.LIST_ALL_FOLDERS)
+                                                                .build())
+                                    .getBody();
     }
 
-//    @RequestMapping(
-//            path = "/save",
-//            method = RequestMethod.POST,
-//            consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-//    String saveFile(@RequestParam("file") MultipartFile file, @RequestParam(value = "path", defaultValue = "") String path) {
-//        service.saveFile(file, path);
-//        return "Success";
-//    }
-//
-//    @GetMapping("/get")
-//    ResponseEntity<Resource> saveFile(@RequestParam("filepath") String filepath) {
-//        InputStreamResource resource = new InputStreamResource(service.getFile(filepath));
-//        return ResponseEntity.ok()
-//                             .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + Paths.get(filepath)
-//                                                                                                       .getFileName() + "\"")
-//                             .contentType(MediaType.APPLICATION_OCTET_STREAM)
-//                             .body(resource);
-//    }
-//
-//    @GetMapping("/listAllFiles")
-//    List<String> listAllFiles() {
-//        return service.listAllFiles();
-//    }
-//
-//    @GetMapping("/listAllFolders")
-//    List<String> listAllFolders() {
-//        return service.listAllFolders();
-//    }
-//
-//    @GetMapping("/listAllFiles/{path}")
-//    List<String> listAllFilesInPath(@PathVariable("path") String path) {
-//        return service.listAllFilesInPath(path);
-//    }
-//
-//    @GetMapping("/listAllFolders/{path}")
-//    List<String> listAllFoldersInPath(@PathVariable("path") String path) {
-//        return service.listAllFoldersInPath(path);
-//    }
-//
-//    @GetMapping("/search/{name}")
-//    List<String> searchFiles(@PathVariable("name") String name) {
-//        return service.searchFiles(name);
-//    }
+    @GetMapping("/listAllFiles/{path}")
+    List<String> listAllFilesInPath(@PathVariable("path") String path) {
+        return librarySearchContract.handle(RepositoryRequestDto.builder()
+                                                                .body(path)
+                                                                .operation(RepositoryRequestDto.Operation.LIST_ALL_FILES_IN_PATH)
+                                                                .build())
+                                    .getBody();
+    }
 
+    @GetMapping("/listAllFolders/{path}")
+    List<String> listAllFoldersInPath(@PathVariable("path") String path) {
+        return librarySearchContract.handle(RepositoryRequestDto.builder()
+                                                                .body(path)
+                                                                .operation(RepositoryRequestDto.Operation.LIST_ALL_FOLDERS_IN_PATH)
+                                                                .build())
+                                    .getBody();
+    }
+
+    @GetMapping("/search/{name}")
+    List<String> searchFiles(@PathVariable("name") String name) {
+        return librarySearchContract.handle(RepositoryRequestDto.builder()
+                                                                .body(name)
+                                                                .operation(RepositoryRequestDto.Operation.SEARCH_FILES)
+                                                                .build())
+                                    .getBody();
+    }
 }

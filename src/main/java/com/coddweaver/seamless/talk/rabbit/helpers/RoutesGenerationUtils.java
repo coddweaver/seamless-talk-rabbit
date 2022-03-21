@@ -224,5 +224,4 @@ public class RoutesGenerationUtils {
         }
         return contractParams.computeIfAbsent(contract, (value) -> params);
     }
-
 }

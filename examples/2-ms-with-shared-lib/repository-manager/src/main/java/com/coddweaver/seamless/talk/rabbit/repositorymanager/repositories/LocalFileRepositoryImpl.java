@@ -1,15 +1,13 @@
 package com.coddweaver.seamless.talk.rabbit.repositorymanager.repositories;
 
+import com.coddweaver.seamless.talk.rabbit.repositorymanager.config.RepositoryProperties;
 import com.coddweaver.seamless.talk.rabbit.repositorymanager.repositories.interfaces.FileRepository;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.apache.logging.log4j.util.Strings;
-import org.springframework.amqp.rabbit.annotation.RabbitListener;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -25,8 +23,8 @@ public class LocalFileRepositoryImpl implements FileRepository {
 
     private final Path repoFolder;
 
-    public LocalFileRepositoryImpl(@Value("${repo.folder}") String repoFolder) {
-        this.repoFolder = Paths.get(repoFolder);
+    public LocalFileRepositoryImpl(RepositoryProperties properties) {
+        this.repoFolder = Paths.get(properties.getFolder());
     }
 
     @Override
@@ -68,7 +66,7 @@ public class LocalFileRepositoryImpl implements FileRepository {
     }
 
     @Override
-    public List<String> searchFiles(String fileName) throws FileNotFoundException {
+    public List<String> searchFiles(String fileName) {
         File root = repoFolder.toFile();
         final Collection<File> files = FileUtils.listFiles(root, new WildcardFileFilter("*" + fileName + "*"),
                                                            new WildcardFileFilter("*"));

@@ -1,5 +1,6 @@
 package com.coddweaver.seamless.talk.rabbit.repositorymanager.services;
 
+import com.coddweaver.seamless.talk.rabbit.exceptions.InternalServiceErrorException;
 import com.coddweaver.seamless.talk.rabbit.repositorymanager.repositories.interfaces.FileRepository;
 import com.coddweaver.seamless.talk.rabbit.repositorymanager.services.interfaces.StorageService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,12 +21,12 @@ public class StorageServiceImpl implements StorageService {
     }
 
     @Override
-    public void saveFile(MultipartFile data, String fileName) {
+    public void saveFile(byte[] data, String fileName) {
         try {
-            repository.saveFile(data.getBytes(), fileName);
+            repository.saveFile(data, fileName);
         }
         catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new InternalServiceErrorException(e);
         }
     }
 
@@ -35,7 +36,7 @@ public class StorageServiceImpl implements StorageService {
             return repository.getFile(fileName);
         }
         catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new InternalServiceErrorException(e);
         }
     }
 
@@ -45,7 +46,7 @@ public class StorageServiceImpl implements StorageService {
             return repository.listAllFiles();
         }
         catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new InternalServiceErrorException(e);
         }
     }
 
@@ -55,7 +56,7 @@ public class StorageServiceImpl implements StorageService {
             return repository.listAllFolders();
         }
         catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new InternalServiceErrorException(e);
         }
     }
 
@@ -65,7 +66,7 @@ public class StorageServiceImpl implements StorageService {
             return repository.listAllFilesInPath(path);
         }
         catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new InternalServiceErrorException(e);
         }
     }
 
@@ -75,7 +76,7 @@ public class StorageServiceImpl implements StorageService {
             return repository.listAllFoldersInPath(path);
         }
         catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new InternalServiceErrorException(e);
         }
     }
 
@@ -85,7 +86,7 @@ public class StorageServiceImpl implements StorageService {
             return repository.searchFiles(fileName);
         }
         catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new InternalServiceErrorException(e);
         }
     }
 }

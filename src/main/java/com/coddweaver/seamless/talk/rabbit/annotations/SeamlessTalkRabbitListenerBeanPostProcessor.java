@@ -39,6 +39,7 @@ import java.lang.reflect.Method;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -222,7 +223,7 @@ public class SeamlessTalkRabbitListenerBeanPostProcessor implements BeanPostProc
         for (Method method : multiMethods) {
             Method checked = checkProxy(method, bean);
             if (AnnotationUtils.findAnnotation(method, RabbitHandler.class)
-                               .isDefault()) { // NOSONAR never null
+                               .isDefault()) {
                 final Method toAssert = defaultMethod;
                 Assert.state(toAssert == null, () -> "Only one @RabbitHandler can be marked 'isDefault', found: "
                         + toAssert.toString() + " and " + method);
@@ -237,12 +238,20 @@ public class SeamlessTalkRabbitListenerBeanPostProcessor implements BeanPostProc
     }
 
     private Method[] findRabbitHandlers(Class<?> targetClass) {
+        final Class<?> contract = Arrays.stream(targetClass.getInterfaces())
+                                        .filter(x -> x.getAnnotation(SeamlessTalkRabbitContract.class) != null)
+                                        .findFirst()
+                                        .orElseThrow();
+
         final List<Method> multiMethods = new ArrayList<>();
-        ReflectionUtils.doWithMethods(targetClass, method -> {
+        ReflectionUtils.doWithMethods(contract, superMethod -> {
+            final Method method = ReflectionUtils.findMethod(targetClass, superMethod.getName(), superMethod.getParameterTypes());
             RabbitHandler rabbitHandler = AnnotationUtils.findAnnotation(method, RabbitHandler.class);
-            if (rabbitHandler != null) {
-                multiMethods.add(method);
+            if (rabbitHandler == null) {
+                throw new IllegalStateException("Found method '" + method.getName() + "' that overrides contract " + contract.getSimpleName() + " but don't have @"
+                                                        + RabbitHandler.class.getSimpleName() + " annotation. Found in " + targetClass);
             }
+            multiMethods.add(method);
         }, ReflectionUtils.USER_DECLARED_METHODS);
         return multiMethods.stream()
                            .toArray(Method[]::new);

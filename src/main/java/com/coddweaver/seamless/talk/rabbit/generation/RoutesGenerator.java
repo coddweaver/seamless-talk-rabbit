@@ -2,14 +2,16 @@ package com.coddweaver.seamless.talk.rabbit.generation;
 
 import com.coddweaver.seamless.talk.rabbit.annotations.SeamlessTalkRabbitContract;
 import com.coddweaver.seamless.talk.rabbit.annotations.SeamlessTalkRabbitListener;
-import com.coddweaver.seamless.talk.rabbit.helpers.CaseUtils;
 import com.coddweaver.seamless.talk.rabbit.helpers.RoutesGenerationUtils;
-import com.google.common.base.CaseFormat;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.amqp.core.*;
+import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
@@ -32,17 +34,21 @@ import static com.coddweaver.seamless.talk.rabbit.helpers.RoutesGenerationUtils.
 @SuppressWarnings("UnusedReturnValue")
 @Service
 @Slf4j
-public final class RoutesGenerator {
+public final class RoutesGenerator implements ApplicationContextAware {
 
     private final Set<Class<?>> readyExchanges = new HashSet<>();
     private final Set<Class<?>> readyContracts = new HashSet<>();
+    private final Set<String> listenerQueueNames = new HashSet<>();
+    private final Set<String> listenerQueueBeanNames = new HashSet<>();
 
     private final Exchange defaultDlx;
     private final Exchange defaultExchange;
     private final ConfigurableBeanFactory beanFactory;
 
+
     @Value("${spring.application.name:}")
     private String applicationName;
+    private String corePackageName;
 
     public RoutesGenerator(ConfigurableBeanFactory beanFactory) {
         this.beanFactory = beanFactory;
@@ -62,6 +68,11 @@ public final class RoutesGenerator {
 
     public Binding getBinding(Class<?> contract) {
         return generateBindingData(contract);
+    }
+
+    @Override
+    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+        initCorePackageName(applicationContext);
     }
 
     private Queue processContract(Class<?> contract, Class<?> listenerClass) {
@@ -108,19 +119,23 @@ public final class RoutesGenerator {
                 queueName = generateQueueName(contract) + "." + this.applicationName + "." + listenerClass.getSimpleName();
             } else {
                 log.warn("It is highly recommended to set @" + SeamlessTalkRabbitListener.class.getSimpleName()
-                                 + ".name() on listeners or spring.application.name property for contracts with type different than DIRECT otherwise it causes long listener's "
-                                 + "queue name contains canonical name of class. Found in " + listenerClass);
-                queueName = generateQueueName(contract) + "." + listenerClass.getCanonicalName();
+                                 + ".name() on listeners or spring.application.name property for contracts with type different than DIRECT\notherwise it causes long listener's "
+                                 + "queue name contains part of canonical name of class. Found in " + listenerClass);
+                queueName = generateQueueName(contract) + "." + getRelativeClassPath(listenerClass);
             }
+            if (listenerQueueNames.contains(queueName)) {
+                throw new IllegalStateException(
+                        "Generated two same queue names for listeners. Please provide unique class names for all listeners in module.");
+            }
+            listenerQueueNames.add(queueName);
             beanNamePostfix = listenerClass.getSimpleName();
         }
 
-        if (Strings.isNotBlank(params.queueName())) {
-            queueName = params.queueName();
-            beanNamePostfix = CaseUtils.convert(queueName, CaseFormat.UPPER_CAMEL);
-        }
-
         String queueBeanName = generateQueueBeanName(contract, beanNamePostfix);
+        if (listenerQueueBeanNames.contains(queueBeanName)) {
+            throw new IllegalStateException(
+                    "Generated two same queue beanNames for listeners. Please provide unique class names for all listeners in module.");
+        }
         queueBuilder = params.durable()
                        ? QueueBuilder.durable(queueName)
                        : QueueBuilder.nonDurable(queueName);
@@ -131,13 +146,14 @@ public final class RoutesGenerator {
             queueBuilder = queueBuilder.ttl(params.messageTtl());
         }
 
-        defineDlq(contract, queueName, beanNamePostfix);
+        if (params.dlqEnabled()) {
+            defineDlq(contract, queueName, beanNamePostfix);
+        }
 
-        queueBuilder = queueBuilder
+        final Queue queue = queueBuilder
                 .deadLetterExchange(DEFAULT_DLX_NAME)
-                .deadLetterRoutingKey(queueName);
-
-        final Queue queue = queueBuilder.build();
+                .deadLetterRoutingKey(queueName)
+                .build();
 
         beanFactory.registerSingleton(queueBeanName, queue);
         readyContracts.add(contract);
@@ -176,7 +192,6 @@ public final class RoutesGenerator {
 
         return binding;
     }
-
 
     private Exchange defineExchange(Class<?> contract) {
         String exchangeBeanName = generateExchangeBeanName(contract);
@@ -217,7 +232,6 @@ public final class RoutesGenerator {
         return binding;
     }
 
-
     private Binding createBinding(Queue queue, Exchange exchange) {
         Binding binding;
         if (exchange.getType()
@@ -234,5 +248,26 @@ public final class RoutesGenerator {
         }
 
         return binding;
+    }
+
+    private String getRelativeClassPath(Class<?> listenerClass) {
+        final String canonicalName = listenerClass.getCanonicalName();
+
+        if (canonicalName.startsWith(corePackageName)) {
+            final String[] split = corePackageName.split("\\.");
+            return split[split.length - 1] + canonicalName.substring(corePackageName.length());
+        }
+
+        return canonicalName;
+    }
+
+    private void initCorePackageName(ApplicationContext context) {
+        final Object startClass = context.getBeansWithAnnotation(SpringBootApplication.class)
+                                         .values()
+                                         .stream()
+                                         .findFirst()
+                                         .orElseThrow();
+        this.corePackageName = startClass.getClass()
+                                         .getPackageName();
     }
 }

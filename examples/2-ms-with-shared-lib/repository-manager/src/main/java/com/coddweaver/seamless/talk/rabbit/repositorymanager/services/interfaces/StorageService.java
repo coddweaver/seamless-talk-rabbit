@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface StorageService {
 
-    void saveFile(MultipartFile data, String path);
+    void saveFile(byte[] data, String path);
 
     InputStream getFile(String path);
 
