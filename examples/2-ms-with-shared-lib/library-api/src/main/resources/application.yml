@@ -15,7 +15,7 @@ spring:
     password: guest
     
     template:
-      reply-timeout: 5000
+      reply-timeout: 30000
     listener:
       direct:
         prefetch: 1
