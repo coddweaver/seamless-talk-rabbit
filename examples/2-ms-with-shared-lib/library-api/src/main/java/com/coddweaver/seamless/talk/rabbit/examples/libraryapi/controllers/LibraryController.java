@@ -1,9 +1,9 @@
 package com.coddweaver.seamless.talk.rabbit.examples.libraryapi.controllers;
 
-import com.coddweaver.seamless.talk.rabbit.examples.sharedlib.api.repositorymanager.contracts.LibraryIOContract;
-import com.coddweaver.seamless.talk.rabbit.examples.sharedlib.api.repositorymanager.contracts.LibrarySearchContract;
-import com.coddweaver.seamless.talk.rabbit.examples.sharedlib.api.repositorymanager.dtos.FileDto;
-import com.coddweaver.seamless.talk.rabbit.examples.sharedlib.api.repositorymanager.dtos.RepositoryRequestDto;
+import com.coddweaver.seamless.talk.rabbit.examples.sharedlib.api.contracts.LibraryIOContract;
+import com.coddweaver.seamless.talk.rabbit.examples.sharedlib.api.contracts.LibrarySearchContract;
+import com.coddweaver.seamless.talk.rabbit.examples.sharedlib.api.dtos.FileDto;
+import com.coddweaver.seamless.talk.rabbit.examples.sharedlib.api.dtos.RepositoryRequestDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;

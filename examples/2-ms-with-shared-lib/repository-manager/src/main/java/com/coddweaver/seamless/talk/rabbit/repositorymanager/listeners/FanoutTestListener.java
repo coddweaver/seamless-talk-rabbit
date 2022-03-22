@@ -1,7 +1,7 @@
 package com.coddweaver.seamless.talk.rabbit.repositorymanager.listeners;
 
 import com.coddweaver.seamless.talk.rabbit.annotations.SeamlessTalkRabbitListener;
-import com.coddweaver.seamless.talk.rabbit.examples.sharedlib.api.repositorymanager.contracts.FanoutTestContract;
+import com.coddweaver.seamless.talk.rabbit.examples.sharedlib.api.contracts.FanoutTestContract;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitHandler;
 

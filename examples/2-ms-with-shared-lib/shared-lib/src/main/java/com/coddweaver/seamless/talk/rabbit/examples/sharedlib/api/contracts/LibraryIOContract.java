@@ -1,7 +1,7 @@
-package com.coddweaver.seamless.talk.rabbit.examples.sharedlib.api.repositorymanager.contracts;
+package com.coddweaver.seamless.talk.rabbit.examples.sharedlib.api.contracts;
 
 import com.coddweaver.seamless.talk.rabbit.annotations.SeamlessTalkRabbitContract;
-import com.coddweaver.seamless.talk.rabbit.examples.sharedlib.api.repositorymanager.dtos.FileDto;
+import com.coddweaver.seamless.talk.rabbit.examples.sharedlib.api.dtos.FileDto;
 
 @SeamlessTalkRabbitContract
 public interface LibraryIOContract {

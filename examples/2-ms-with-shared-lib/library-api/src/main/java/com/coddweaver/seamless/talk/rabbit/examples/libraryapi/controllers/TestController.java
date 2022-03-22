@@ -1,6 +1,6 @@
 package com.coddweaver.seamless.talk.rabbit.examples.libraryapi.controllers;
 
-import com.coddweaver.seamless.talk.rabbit.examples.sharedlib.api.repositorymanager.contracts.FanoutTestContract;
+import com.coddweaver.seamless.talk.rabbit.examples.sharedlib.api.contracts.FanoutTestContract;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

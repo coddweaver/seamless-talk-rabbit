@@ -1,4 +1,4 @@
-package com.coddweaver.seamless.talk.rabbit.examples.sharedlib.api.repositorymanager.dtos;
+package com.coddweaver.seamless.talk.rabbit.examples.sharedlib.api.dtos;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
