@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
  * @see SeamlessTalkRabbitContract
  */
 @SupportedAnnotationTypes(SeamlessTalkRabbitContractProcessor.ANNOTATION_PATH)
-@SupportedSourceVersion(SourceVersion.RELEASE_11)
+@SupportedSourceVersion(SourceVersion.RELEASE_8)
 public class SeamlessTalkRabbitContractProcessor extends AbstractProcessor {
 
     public final static String ANNOTATION_PATH = "com.coddweaver.seamless.talk.rabbit.annotations.SeamlessTalkRabbitContract";

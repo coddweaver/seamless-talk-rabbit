@@ -26,7 +26,9 @@ public abstract class AbstractRabbitApi {
                                               .filter(x -> !x.getClassName()
                                                              .equals(AbstractRabbitApi.class.getCanonicalName()))
                                               .findFirst()
-                                              .orElseThrow();
+                                              .orElseThrow(() -> new IllegalStateException(
+                                                      "Cannot find any class except " + AbstractRabbitApi.class.getSimpleName()
+                                                              + " in stacktrace"));
 
         return first.getClassName() + "." + first.getMethodName();
     }

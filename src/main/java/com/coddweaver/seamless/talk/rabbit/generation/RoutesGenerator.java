@@ -266,8 +266,7 @@ public final class RoutesGenerator implements ApplicationContextAware {
                                          .values()
                                          .stream()
                                          .findFirst()
-                                         .orElseThrow();
-        this.corePackageName = startClass.getClass()
-                                         .getPackageName();
+                                         .orElseThrow(() -> new IllegalStateException("Cannot detect @SpringBootApplication on main class"));
+        this.corePackageName = startClass.getClass().getPackage().getName();
     }
 }

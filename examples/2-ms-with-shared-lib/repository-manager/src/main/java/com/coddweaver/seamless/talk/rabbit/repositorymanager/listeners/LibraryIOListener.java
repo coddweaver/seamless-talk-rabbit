@@ -5,6 +5,7 @@ import com.coddweaver.seamless.talk.rabbit.examples.sharedlib.api.contracts.Libr
 import com.coddweaver.seamless.talk.rabbit.examples.sharedlib.api.dtos.FileDto;
 import com.coddweaver.seamless.talk.rabbit.repositorymanager.services.interfaces.StorageService;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.io.IOUtils;
 import org.springframework.amqp.rabbit.annotation.RabbitHandler;
 
 import java.io.InputStream;
@@ -21,7 +22,7 @@ public class LibraryIOListener implements LibraryIOContract {
         try {
             final InputStream file = storageService.getFile(filePath);
             return FileDto.builder()
-                          .data(file.readAllBytes())
+                          .data(IOUtils.toByteArray(file))
                           .path(filePath)
                           .build();
         }

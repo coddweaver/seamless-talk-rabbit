@@ -241,7 +241,7 @@ public class SeamlessTalkRabbitListenerBeanPostProcessor implements BeanPostProc
         final Class<?> contract = Arrays.stream(targetClass.getInterfaces())
                                         .filter(x -> x.getAnnotation(SeamlessTalkRabbitContract.class) != null)
                                         .findFirst()
-                                        .orElseThrow();
+                                        .orElseThrow(() -> new IllegalStateException("Have not found any @" + SeamlessTalkRabbitContract.class.getSimpleName() + " annotations on " + targetClass));
 
         final List<Method> multiMethods = new ArrayList<>();
         ReflectionUtils.doWithMethods(contract, superMethod -> {
