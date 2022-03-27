@@ -6,7 +6,7 @@ plugins {
 }
 
 group = 'com.coddweaver'
-version = '1.0.0-SNAPSHOT'
+version = '1.0.1-SNAPSHOT'
 description = 'Seamless Talk (RabbitMQ) is a java library for easy and fast developing microservices\' communication on the RabbitMQ bus. ' +
         'It wraps Spring AMQP mechanics by some automation, making it easier to develop software and waste less time to deal with RabbitMQ.' +
         '\n\nMore can find at https://github.com/coddweaver/seamless-talk-rabbit'
